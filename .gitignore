@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+data/cache/*.json
+logs/*.log
+passwd.json
+mcps.local.json
+personas/*.md
+!personas/.gitkeep

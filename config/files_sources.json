@@ -1,0 +1,63 @@
+{
+  "sources": [
+    {
+      "id": "woddi-core",
+      "name": "woddi-ai Core",
+      "path": "/srv/http/woddi-ai",
+      "patterns": [
+        "README.md",
+        "docs/**/*.md",
+        "config/**/*.json",
+        "core/**/*.py",
+        "modules/**/*.py",
+        "satellite/**/*.py",
+        "systemd/**/*.tpl"
+      ]
+    },
+    {
+      "id": "satellite-docs",
+      "name": "Satellite Docs",
+      "path": "/srv/http/woddi-ai-satellite-docs",
+      "patterns": [
+        "README.md",
+        "config/**/*.json",
+        "app/**/*.py",
+        "scripts/**/*.sh"
+      ]
+    },
+    {
+      "id": "satellite-netbox",
+      "name": "Satellite NetBox",
+      "path": "/srv/http/woddi-ai-satellite-netbox",
+      "patterns": [
+        "README.md",
+        "app/**/*.py",
+        "scripts/**/*.sh"
+      ]
+    },
+    {
+      "id": "satellite-prometheus",
+      "name": "Satellite Prometheus",
+      "path": "/srv/http/woddi-ai-satellite-prometheus",
+      "patterns": [
+        "README.md",
+        "app/**/*.py",
+        "scripts/**/*.sh"
+      ]
+    },
+    {
+      "id": "control",
+      "name": "woddi-ai Control",
+      "path": "/srv/http/woddi-ai-control",
+      "patterns": [
+        "README.md",
+        "config/**/*.json",
+        "app/**/*.py",
+        "web/**/*.html",
+        "web/**/*.js",
+        "systemd/**/*.tpl",
+        "scripts/**/*.sh"
+      ]
+    }
+  ]
+}

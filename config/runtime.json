@@ -1,0 +1,45 @@
+{
+  "app": {
+    "name": "woddi-ai-control",
+    "host": "0.0.0.0",
+    "port": 8095,
+    "log_level": "INFO",
+    "log_file": "logs/woddi-ai-control.log"
+  },
+  "llm": {
+    "base_url": "http://127.0.0.1:11434/v1",
+    "model": "llama3.2:latest",
+    "fallback_model": "",
+    "api_key": "",
+    "timeout_seconds": 180,
+    "max_tokens": 1400,
+    "cache_ttl_seconds": 45,
+    "cache_max_entries": 512
+  },
+  "chat": {
+    "history_limit": 12,
+    "rate_limit_per_minute": 90,
+    "context_max_chars": 18000,
+    "docs_top_k": 4,
+    "docs_search_cache_ttl_seconds": 120,
+    "docs_answer_cache_ttl_seconds": 120
+  },
+  "docs": {
+    "allow_outside_project": true,
+    "source_scan_cache_ttl_seconds": 20,
+    "health_cache_ttl_seconds": 15
+  },
+  "files": {
+    "allow_outside_project": true,
+    "search_cache_ttl_seconds": 45,
+    "read_max_chars": 12000,
+    "search_max_results": 8
+  },
+  "netbox": {
+    "base_url": "https://netbox-dev.global.cloud.sap/api",
+    "token": "",
+    "token_env": "",
+    "cache_ttl_seconds": 45,
+    "timeout_seconds": 12
+  }
+}

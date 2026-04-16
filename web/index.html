@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>woddi-ai-control</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-mark.svg">
+  <link rel="shortcut icon" href="/static/logo-mark.svg">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div id="login-gate" class="panel" style="max-width:520px;margin:32px auto;">
+    <div class="panel-head">
+      <div>
+        <h2>Login</h2>
+        <p class="muted">Nutzer sehen nur ihre erlaubten MCPs. Konfiguration und Betrieb sind Admin-only.</p>
+      </div>
+    </div>
+    <label>
+      Benutzername
+      <input id="login-username" type="text" autocomplete="username">
+    </label>
+    <label>
+      Passwort
+      <input id="login-password" type="password" autocomplete="current-password">
+    </label>
+    <div class="button-row">
+      <button id="login-submit">Anmelden</button>
+    </div>
+    <pre id="login-output" class="console"></pre>
+  </div>
+
+  <div id="app-shell" hidden>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="hero">
+    <div class="brand-lockup">
+      <img class="brand-mark" src="/static/logo-mark.svg" alt="woddi-ai control Logo">
+      <div class="brand-copy">
+        <p class="eyebrow">woddi-ai-control</p>
+        <h1>MCP Control Desk fuer woddi-ai Satelliten</h1>
+        <p class="subline">Weboberflaeche fuer Doku-, Files- und NetBox-MCPs mit Runtime-Reload, Restart, Root-Verwaltung und direktem MCP-Zugriff.</p>
+      </div>
+    </div>
+    <div class="hero-badges">
+      <span id="viewer-pill" class="pill alt">User: -</span>
+      <span id="release-pill" class="pill alt">Release: -</span>
+      <span id="health-pill" class="pill">Health: lade...</span>
+      <span id="llm-pill" class="pill alt">LLM: -</span>
+      <button id="logout-button" class="secondary">Logout</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <nav class="view-tabs" aria-label="Bereiche">
+      <button class="tab-button active" data-view-button="overview">Uebersicht</button>
+      <button class="tab-button" data-view-button="docs">Doku</button>
+      <button class="tab-button" data-view-button="tools">Tools</button>
+      <button class="tab-button admin-only" data-view-button="config">Konfiguration</button>
+      <button class="tab-button admin-only" data-view-button="logs">Logs</button>
+    </nav>
+
+    <section class="view-panel active" data-view-panel="overview">
+      <div class="overview-grid">
+        <section class="panel chat-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Chat</h2>
+              <p class="muted">Streaming mit MCP-Kontext aus Doku, Files und optional NetBox.</p>
+            </div>
+            <div class="session-wrap">
+              <label>
+                Session
+                <input id="session-id" type="text" value="woddi-ai-control-session">
+              </label>
+            </div>
+          </div>
+
+          <div id="mcp-selector" class="scope-row">
+            <label><input id="show-mcp-context-in-chat" type="checkbox" checked> MCP Kontext im Chat</label>
+          </div>
+
+          <div id="chat-output" class="chat-output"></div>
+
+          <div class="chat-compose">
+            <textarea id="chat-input" rows="4" placeholder="Frage stellen oder direkt /mcp files search {&quot;query&quot;:&quot;satellite_services&quot;}"></textarea>
+            <div class="compose-actions">
+              <button id="send-chat">Senden</button>
+              <button id="clear-chat" class="secondary">Leeren</button>
+            </div>
+          </div>
+
+          <div class="meta-grid collapsible-grid">
+            <details class="meta-fold" open>
+              <summary>Zitierungen</summary>
+              <article class="meta-card">
+                <ul id="citations" class="list"></ul>
+              </article>
+            </details>
+            <details class="meta-fold">
+              <summary>MCP Debug</summary>
+              <article class="meta-card">
+                <pre id="mcp-debug" class="console"></pre>
+              </article>
+            </details>
+          </div>
+        </section>
+
+        <aside class="stack right-rail">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Systemstatus</h2>
+                <p class="muted">Schneller Blick auf LLM, NetBox, MCP-Pfade und File-Roots.</p>
+              </div>
+              <button id="refresh-health" class="secondary">Refresh</button>
+            </div>
+            <div id="config-summary" class="summary-grid"></div>
+            <div class="meta-grid compact">
+              <article class="meta-card">
+                <h3>NetBox</h3>
+                <div id="netbox-summary" class="kv-list"></div>
+              </article>
+              <article class="meta-card">
+                <h3>Pfade</h3>
+                <div id="paths-list" class="kv-list"></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>MCP Status</h2>
+                <p class="muted">Quellenzustand, File-Roots und Reindex/Health zentral im Blick.</p>
+              </div>
+            </div>
+            <div id="mcp-cards" class="mcp-cards scroll-box"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Performance</h2>
+                <p class="muted">Rolling Metriken fuer Chat, Retrieval und wichtige Endpunkte.</p>
+              </div>
+            </div>
+            <div id="performance-summary" class="summary-grid"></div>
+            <div class="meta-grid compact">
+              <article class="meta-card">
+                <h3>Breakdown</h3>
+                <div id="performance-breakdown" class="kv-list"></div>
+              </article>
+              <article class="meta-card">
+                <h3>Endpoints</h3>
+                <div id="performance-endpoints" class="kv-list"></div>
+              </article>
+            </div>
+            <article class="meta-card">
+              <h3>Recent Requests</h3>
+              <pre id="performance-recent" class="console compact-console"></pre>
+            </article>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view-panel" data-view-panel="docs">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Betriebsdoku</h2>
+            <p class="muted">README, Architektur und Operations direkt in der Oberfläche.</p>
+          </div>
+        </div>
+        <div class="panel-grid">
+          <aside class="panel" style="padding:12px;">
+            <div id="docs-nav" class="docs-nav"></div>
+          </aside>
+          <article class="panel" style="padding:12px;">
+            <div id="docs-meta" class="kv-list"></div>
+            <pre id="docs-content" class="console docs-console"></pre>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="view-panel" data-view-panel="tools">
+      <div class="panel-grid two-up">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Direkter MCP Call</h2>
+              <p class="muted">Fuer exakte Abfragen gegen Docs, Files oder NetBox.</p>
+            </div>
+          </div>
+          <label>
+            MCP
+            <select id="mcp-id"></select>
+          </label>
+          <label>
+            Action
+            <input id="mcp-action" type="text" value="search">
+          </label>
+          <label>
+            JSON Payload
+            <textarea id="mcp-payload" rows="8">{ "query": "pricing configuration" }</textarea>
+          </label>
+          <button id="run-mcp">Ausfuehren</button>
+          <pre id="mcp-output" class="console"></pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>NetBox Quick Query</h2>
+              <p class="muted">Token ist optional. Falls die Ziel-API anonym blockiert, erscheint das sauber als HTTP 401/403.</p>
+            </div>
+          </div>
+          <label>
+            Object Type
+            <select id="netbox-object-type">
+              <option value="devices">devices</option>
+              <option value="sites">sites</option>
+              <option value="racks">racks</option>
+              <option value="interfaces">interfaces</option>
+              <option value="ip-addresses">ip-addresses</option>
+              <option value="prefixes">prefixes</option>
+              <option value="tenants">tenants</option>
+              <option value="virtual-machines">virtual-machines</option>
+              <option value="clusters">clusters</option>
+            </select>
+          </label>
+          <label>
+            Suche
+            <input id="netbox-query" type="text" placeholder="hostname, ip, rack, site ...">
+          </label>
+          <button id="run-netbox" class="secondary">NetBox abfragen</button>
+          <pre id="netbox-output" class="console"></pre>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>Control Plane</h2>
+              <p class="muted">Reload und Prozesssteuerung bleiben separat von Konfiguration und Logs.</p>
+            </div>
+          </div>
+          <div class="card-actions admin-only">
+            <button id="reload-runtime" class="secondary">Runtime Reload</button>
+            <button id="restart-app" class="secondary">Restart Main</button>
+            <button id="shutdown-app" class="secondary">Shutdown Main</button>
+          </div>
+          <pre id="control-output" class="console"></pre>
+        </section>
+      </div>
+    </section>
+
+    <section class="view-panel" data-view-panel="config">
+      <div class="panel-grid">
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>Docs Quellen</h2>
+              <p class="muted">Doku-Pfade fuer die Satelliten pflegen, ZIP hochladen und bei Bedarf sofort reindexen.</p>
+            </div>
+            <button id="save-docs-manager" class="secondary">Pfade speichern</button>
+          </div>
+          <p id="docs-manager-note" class="hint"></p>
+          <div id="docs-sources-manager" class="docs-grid"></div>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>MCP Manager</h2>
+              <p class="muted">Lokale und entfernte MCPs ueber Formulare verwalten, inklusive Remote-Handshake.</p>
+            </div>
+            <div class="button-row">
+              <button id="add-mcp-docs" class="secondary">Docs MCP</button>
+              <button id="add-mcp-files" class="secondary">Files MCP</button>
+              <button id="add-mcp-netbox" class="secondary">NetBox MCP</button>
+              <button id="add-mcp-remote" class="secondary">Remote MCP</button>
+              <button id="save-mcp-manager">Manager speichern</button>
+            </div>
+          </div>
+          <div id="mcp-manager" class="docs-grid"></div>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>MCP Raw Config</h2>
+              <p class="muted">Fallback fuer direkte Bearbeitung von <code>mcps.local.json</code>.</p>
+            </div>
+          </div>
+          <label>
+            mcps.local.json
+            <textarea id="mcps-json" rows="18"></textarea>
+          </label>
+          <button id="save-mcps" class="secondary">MCPs speichern</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Passwd</h2>
+              <p class="muted">User, Gruppen, Persona und erlaubte MCP-IDs in der Root-Datei.</p>
+            </div>
+          </div>
+          <label>
+            passwd.json
+            <textarea id="users-json" rows="18"></textarea>
+          </label>
+          <button id="save-users" class="secondary">User speichern</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Personas</h2>
+              <p class="muted">Menschenlesbare Verhaltensdateien unter <code>personas/*.md</code>.</p>
+            </div>
+            <button id="save-persona" class="secondary">Persona speichern</button>
+          </div>
+          <label>
+            Persona
+            <select id="persona-id"></select>
+          </label>
+          <label>
+            Inhalt
+            <textarea id="persona-content" rows="18"></textarea>
+          </label>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>Files Roots</h2>
+              <p class="muted">Lokale Repo- und Konfigurationswurzeln fuer den Files-MCP ueber die UI verwalten.</p>
+            </div>
+            <button id="save-files-manager" class="secondary">Roots speichern</button>
+          </div>
+          <p id="files-manager-note" class="hint"></p>
+          <div id="files-sources-manager" class="docs-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>LLM Verbindung</h2>
+              <p class="muted">Base URL, Modell und Timeout direkt pflegen und sofort gegen den Upstream pruefen.</p>
+            </div>
+            <button id="save-llm-settings">LLM speichern</button>
+          </div>
+          <label>
+            Base URL
+            <input id="llm-base-url" type="text" placeholder="http://llm-host:11434/v1">
+          </label>
+          <div class="panel-grid">
+            <label>
+              Modell
+              <input id="llm-model" type="text" placeholder="llama3.2:latest">
+            </label>
+            <label>
+              Fallback Modell
+              <input id="llm-fallback-model" type="text" placeholder="optional">
+            </label>
+          </div>
+          <div class="panel-grid">
+            <label>
+              Timeout Sekunden
+              <input id="llm-timeout-seconds" type="number" min="5" max="900" step="1">
+            </label>
+            <label>
+              Max Tokens
+              <input id="llm-max-tokens" type="number" min="128" max="8192" step="1">
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="probe-llm" class="secondary">LLM Probe</button>
+          </div>
+          <pre id="llm-probe-output" class="console"></pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Runtime Settings</h2>
+              <p class="muted">LLM-, App-, Chat- und NetBox-Parameter persistent aendern.</p>
+            </div>
+          </div>
+          <label>
+            Runtime JSON
+            <textarea id="runtime-json" rows="16"></textarea>
+          </label>
+          <button id="save-runtime">Runtime speichern</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>NetBox MCP</h2>
+              <p class="muted">Base URL, Token-Quelle, Timeout und Cache direkt fuer dein NetBox-MCP pflegen.</p>
+            </div>
+            <button id="save-netbox-settings">NetBox speichern</button>
+          </div>
+          <label>
+            Base URL
+            <input id="netbox-base-url" type="text" placeholder="https://netbox.example.com/api">
+          </label>
+          <div class="panel-grid">
+            <label>
+              Token Env
+              <input id="netbox-token-env" type="text" placeholder="NETBOX_TOKEN">
+            </label>
+            <label>
+              Token
+              <input id="netbox-token" type="password" placeholder="optional statisch">
+            </label>
+          </div>
+          <div class="panel-grid">
+            <label>
+              Timeout Sekunden
+              <input id="netbox-timeout-seconds" type="number" min="3" max="120" step="1">
+            </label>
+            <label>
+              Cache TTL Sekunden
+              <input id="netbox-cache-ttl-seconds" type="number" min="5" max="600" step="1">
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="probe-netbox" class="secondary">NetBox Probe</button>
+          </div>
+          <pre id="netbox-probe-output" class="console"></pre>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>NetBox Field Explorer</h2>
+              <p class="muted">Filter, Feldnamen und ein Sample-Objekt fuer den gewaehlten NetBox-Endpoint anzeigen.</p>
+            </div>
+          </div>
+          <div class="panel-grid">
+            <label>
+              Object Type
+              <select id="netbox-explorer-object-type">
+                <option value="devices">devices</option>
+                <option value="sites">sites</option>
+                <option value="racks">racks</option>
+                <option value="interfaces">interfaces</option>
+                <option value="ip-addresses">ip-addresses</option>
+                <option value="prefixes">prefixes</option>
+                <option value="tenants">tenants</option>
+                <option value="virtual-machines">virtual-machines</option>
+                <option value="clusters">clusters</option>
+              </select>
+            </label>
+            <label>
+              Suche
+              <input id="netbox-explorer-query" type="text" placeholder="hostname, ip, site ...">
+            </label>
+          </div>
+          <div class="panel-grid">
+            <label>
+              Sample Limit
+              <input id="netbox-explorer-sample-limit" type="number" min="1" max="10" step="1" value="1">
+            </label>
+            <div class="button-row">
+              <button id="explore-netbox-fields" class="secondary">Felder laden</button>
+              <button id="download-netbox-bundle" class="secondary">Diagnose ZIP</button>
+            </div>
+          </div>
+          <pre id="netbox-explorer-output" class="console log-console"></pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Docs Sources</h2>
+              <p class="muted">Raw JSON fuer Muster, IDs und weitere Dokuquellen.</p>
+            </div>
+          </div>
+          <label>
+            docs_sources.json
+            <textarea id="docs-sources-json" rows="14"></textarea>
+          </label>
+          <button id="save-docs-sources" class="secondary">Docs Sources speichern</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Files Sources</h2>
+              <p class="muted">Raw JSON fuer File-Roots, Pfade und Muster des Files-MCP.</p>
+            </div>
+          </div>
+          <label>
+            files_sources.json
+            <textarea id="files-sources-json" rows="14"></textarea>
+          </label>
+          <button id="save-files-sources" class="secondary">Files Sources speichern</button>
+        </section>
+
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>System Prompt</h2>
+              <p class="muted">Prompt und AI-Verhalten zentral und persistent anpassen.</p>
+            </div>
+          </div>
+          <label>
+            Prompt
+            <textarea id="system-prompt" rows="14"></textarea>
+          </label>
+          <button id="save-system-prompt" class="secondary">Prompt speichern</button>
+        </section>
+      </div>
+    </section>
+
+    <section class="view-panel" data-view-panel="logs">
+      <div class="panel-grid">
+        <section class="panel panel-span-2">
+          <div class="panel-head">
+            <div>
+              <h2>Logs</h2>
+              <p class="muted">Betriebslogs getrennt vom Konfigurationsbereich. App- und Service-Log koennen separat gelesen werden.</p>
+            </div>
+            <button id="refresh-logs" class="secondary">Logs laden</button>
+          </div>
+          <div class="toolbar">
+            <label>
+              Datei
+              <select id="log-file">
+                <option value="service">service</option>
+                <option value="app">app</option>
+              </select>
+            </label>
+            <label>
+              Zeilen
+              <select id="log-lines">
+                <option value="80">80</option>
+                <option value="160" selected>160</option>
+                <option value="300">300</option>
+              </select>
+            </label>
+          </div>
+          <pre id="log-output" class="console log-console"></pre>
+        </section>
+      </div>
+    </section>
+  </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

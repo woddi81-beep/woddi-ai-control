@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "id": "woddi-core-docs",
+      "name": "woddi-ai Core Docs",
+      "path": "/srv/http/woddi-ai",
+      "patterns": [
+        "README.md",
+        "docs/**/*.md",
+        "releases/*.md"
+      ]
+    },
+    {
+      "id": "satellite-docs-docs",
+      "name": "Satellite Docs Service",
+      "path": "/srv/http/woddi-ai-satellite-docs",
+      "patterns": [
+        "README.md",
+        "config/**/*.json",
+        "app/**/*.py"
+      ]
+    },
+    {
+      "id": "satellite-netbox-docs",
+      "name": "Satellite NetBox Service",
+      "path": "/srv/http/woddi-ai-satellite-netbox",
+      "patterns": [
+        "README.md",
+        "app/**/*.py",
+        "scripts/**/*.sh"
+      ]
+    },
+    {
+      "id": "satellite-prometheus-docs",
+      "name": "Satellite Prometheus Service",
+      "path": "/srv/http/woddi-ai-satellite-prometheus",
+      "patterns": [
+        "README.md",
+        "app/**/*.py",
+        "scripts/**/*.sh"
+      ]
+    }
+  ]
+}
