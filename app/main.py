@@ -444,20 +444,21 @@ def _validate_mcps_config(mcps: list[dict[str, Any]]) -> list[dict[str, Any]]:
             if not base_url:
                 raise HTTPException(status_code=400, detail=f"remote_base_url_fehlt:{mcp_id}")
             protocol = str(item.get("protocol", "standard_v1")).strip().lower() or "standard_v1"
-            if protocol not in {"standard_v1", "satellite_execute_v1"}:
+            if protocol not in {"standard_v1", "satellite_execute_v1", "mcp_http_v1"}:
                 raise HTTPException(status_code=400, detail=f"ungueltiges_remote_protocol:{mcp_id}")
             module = str(item.get("module", "")).strip().lower()
             start_command = _normalize_command_list(item.get("start_command"), field_name=f"start_command:{mcp_id}")
             stop_command = _normalize_command_list(item.get("stop_command"), field_name=f"stop_command:{mcp_id}")
             status_command = _normalize_command_list(item.get("status_command"), field_name=f"status_command:{mcp_id}")
             working_dir = str(item.get("working_dir", "")).strip()
+            execute_default = "/mcp" if protocol == "mcp_http_v1" else "/execute"
             normalized.append(
                 {
                     **base,
                     "base_url": base_url.rstrip("/"),
                     "protocol": protocol,
                     "module": module,
-                    "execute_path": str(item.get("execute_path", "/execute")).strip() or "/execute",
+                    "execute_path": str(item.get("execute_path", execute_default)).strip() or execute_default,
                     "health_path": str(item.get("health_path", "/health")).strip() or "/health",
                     "bearer_token": str(item.get("bearer_token", "")).strip(),
                     "bearer_token_env": str(item.get("bearer_token_env", "")).strip(),

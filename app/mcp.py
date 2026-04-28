@@ -6,6 +6,7 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
+from uuid import uuid4
 
 import httpx
 
@@ -79,6 +80,8 @@ class RemoteHttpMCP(BaseMCP):
         self.bearer_token = bearer_token.strip()
         self.bearer_token_env = bearer_token_env.strip()
         self.timeout_seconds = max(3.0, float(timeout_seconds))
+        self._rpc_counter = 0
+        self._mcp_session_id = ""
         timeout = httpx.Timeout(
             connect=max(3.0, self.timeout_seconds),
             read=max(3.0, self.timeout_seconds),
@@ -101,6 +104,9 @@ class RemoteHttpMCP(BaseMCP):
         )
         return base
 
+    def _is_mcp_http(self) -> bool:
+        return self.protocol == "mcp_http_v1"
+
     def _execute_request_body(self, action: str, payload: dict[str, Any]) -> dict[str, Any]:
         normalized = action.strip().lower() or "health"
         if self.protocol == "satellite_execute_v1":
@@ -114,11 +120,118 @@ class RemoteHttpMCP(BaseMCP):
         token = self.bearer_token or (os.getenv(self.bearer_token_env, "").strip() if self.bearer_token_env else "")
         if token:
             headers["Authorization"] = f"Bearer {token}"
+        if self._mcp_session_id:
+            headers["Mcp-Session-Id"] = self._mcp_session_id
+        if self._is_mcp_http():
+            headers["MCP-Protocol-Version"] = "2025-03-26"
         return headers
+
+    def _next_rpc_id(self) -> str:
+        self._rpc_counter += 1
+        return f"{self.mcp_id}-{self._rpc_counter}-{uuid4().hex[:6]}"
+
+    def _mcp_endpoint_url(self) -> str:
+        return f"{self.base_url}{self.execute_path}"
+
+    def _remember_mcp_session(self, response: httpx.Response) -> None:
+        session_id = response.headers.get("Mcp-Session-Id", "").strip()
+        if session_id:
+            self._mcp_session_id = session_id
+
+    def _mcp_http_request(
+        self,
+        *,
+        method: str,
+        params: dict[str, Any] | None = None,
+        request_id: str | None = None,
+        expect_result: bool = True,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
+        if params is not None:
+            body["params"] = params
+        if request_id is not None:
+            body["id"] = request_id
+        response = self._client.post(self._mcp_endpoint_url(), headers=self._headers(), json=body)
+        self._remember_mcp_session(response)
+        response.raise_for_status()
+        if not response.content:
+            return {}
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise RuntimeError("mcp_http_invalid_response")
+        if isinstance(payload.get("error"), dict):
+            message = str(payload["error"].get("message", "MCP error")).strip() or "MCP error"
+            code = payload["error"].get("code")
+            raise RuntimeError(f"{message} ({code})" if code is not None else message)
+        if not expect_result:
+            return payload
+        result = payload.get("result")
+        return result if isinstance(result, dict) else {"result": result}
+
+    def _mcp_http_initialize(self) -> dict[str, Any]:
+        init_result = self._mcp_http_request(
+            method="initialize",
+            request_id=self._next_rpc_id(),
+            params={
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "woddi-ai-control", "version": "0.2.0"},
+            },
+        )
+        try:
+            self._mcp_http_request(
+                method="notifications/initialized",
+                params={},
+                expect_result=False,
+            )
+        except Exception:
+            logger.debug("MCP initialized notification failed for %s", self.mcp_id, exc_info=True)
+        return init_result
+
+    def _mcp_http_tools(self) -> dict[str, Any]:
+        return self._mcp_http_request(
+            method="tools/list",
+            request_id=self._next_rpc_id(),
+            params={},
+        )
+
+    def _mcp_http_call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return self._mcp_http_request(
+            method="tools/call",
+            request_id=self._next_rpc_id(),
+            params={"name": tool_name, "arguments": arguments},
+        )
 
     def health(self) -> MCPResult:
         if not self.base_url:
             return MCPResult(False, self.mcp_id, "health", "Remote MCP base_url fehlt.", {}, "missing_base_url")
+        if self._is_mcp_http():
+            try:
+                initialize = self._mcp_http_initialize()
+                server_info = initialize.get("serverInfo", {}) if isinstance(initialize.get("serverInfo"), dict) else {}
+                return MCPResult(
+                    True,
+                    self.mcp_id,
+                    "health",
+                    "MCP HTTP Endpoint erreichbar.",
+                    {
+                        "base_url": self.base_url,
+                        "mcp_url": self._mcp_endpoint_url(),
+                        "protocol": self.protocol,
+                        "session_id": self._mcp_session_id,
+                        "server_info": server_info,
+                        "initialize": initialize,
+                    },
+                )
+            except Exception as exc:
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    "health",
+                    f"MCP HTTP Endpoint nicht erreichbar: {exc}",
+                    {"base_url": self.base_url, "mcp_url": self._mcp_endpoint_url(), "protocol": self.protocol},
+                    "request_error",
+                )
         try:
             response = self._client.get(f"{self.base_url}{self.health_path}", headers=self._headers())
             response.raise_for_status()
@@ -130,6 +243,46 @@ class RemoteHttpMCP(BaseMCP):
     def handshake(self) -> MCPResult:
         if not self.base_url:
             return MCPResult(False, self.mcp_id, "handshake", "Remote MCP base_url fehlt.", {}, "missing_base_url")
+        if self._is_mcp_http():
+            try:
+                initialize = self._mcp_http_initialize()
+                tools_result = self._mcp_http_tools()
+                tools = tools_result.get("tools", []) if isinstance(tools_result.get("tools"), list) else []
+                return MCPResult(
+                    True,
+                    self.mcp_id,
+                    "handshake",
+                    "MCP HTTP Handshake erfolgreich.",
+                    {
+                        "base_url": self.base_url,
+                        "mcp_url": self._mcp_endpoint_url(),
+                        "protocol": self.protocol,
+                        "session_id": self._mcp_session_id,
+                        "server_info": initialize.get("serverInfo", {}),
+                        "capabilities": initialize.get("capabilities", {}),
+                        "tools": tools,
+                        "initialize": initialize,
+                    },
+                )
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code if exc.response is not None else "unknown"
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    "handshake",
+                    f"MCP HTTP Handshake HTTP Fehler {status}.",
+                    {"base_url": self.base_url, "mcp_url": self._mcp_endpoint_url(), "protocol": self.protocol},
+                    f"http_status_{status}",
+                )
+            except Exception as exc:
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    "handshake",
+                    f"MCP HTTP Handshake Fehler: {exc}",
+                    {"base_url": self.base_url, "mcp_url": self._mcp_endpoint_url(), "protocol": self.protocol},
+                    "request_error",
+                )
         if self.protocol == "satellite_execute_v1":
             health_result = self.health()
             if not health_result.success:
@@ -217,6 +370,77 @@ class RemoteHttpMCP(BaseMCP):
             return self.handshake()
         if not self.base_url:
             return MCPResult(False, self.mcp_id, normalized, "Remote MCP base_url fehlt.", {}, "missing_base_url")
+        if self._is_mcp_http():
+            try:
+                if normalized in {"probe", "tools"}:
+                    initialize = self._mcp_http_initialize()
+                    tools_result = self._mcp_http_tools()
+                    return MCPResult(
+                        True,
+                        self.mcp_id,
+                        normalized,
+                        "MCP HTTP Probe erfolgreich.",
+                        {
+                            "base_url": self.base_url,
+                            "mcp_url": self._mcp_endpoint_url(),
+                            "protocol": self.protocol,
+                            "session_id": self._mcp_session_id,
+                            "server_info": initialize.get("serverInfo", {}),
+                            "capabilities": initialize.get("capabilities", {}),
+                            "tools": tools_result.get("tools", []),
+                        },
+                    )
+                if normalized == "call":
+                    tool_name = str(payload.get("tool_name") or payload.get("name") or "").strip()
+                    if not tool_name:
+                        return MCPResult(
+                            False,
+                            self.mcp_id,
+                            normalized,
+                            "Fuer MCP HTTP tool call fehlt tool_name.",
+                            {"hint": "Nutze action=call und payload.tool_name plus payload.arguments."},
+                            "missing_tool_name",
+                        )
+                    raw_arguments = payload.get("arguments", payload.get("args", {}))
+                    arguments = raw_arguments if isinstance(raw_arguments, dict) else {}
+                    result = self._mcp_http_call_tool(tool_name, arguments)
+                    return MCPResult(
+                        True,
+                        self.mcp_id,
+                        normalized,
+                        f"MCP HTTP Tool {tool_name} erfolgreich ausgefuehrt.",
+                        {"tool_name": tool_name, "arguments": arguments, "response": result},
+                    )
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    normalized,
+                    "Dieses MCP nutzt generisches MCP HTTP. Verwende health, handshake, probe/tools oder call.",
+                    {
+                        "supported_actions": ["health", "handshake", "probe", "tools", "call"],
+                        "hint": "Direkter Aufruf: action=call, payload={\"tool_name\":\"get_objects\",\"arguments\":{...}}",
+                    },
+                    "unsupported_action",
+                )
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code if exc.response is not None else "unknown"
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    normalized,
+                    f"MCP HTTP Fehler {status}.",
+                    {"base_url": self.base_url, "mcp_url": self._mcp_endpoint_url(), "protocol": self.protocol},
+                    f"http_status_{status}",
+                )
+            except Exception as exc:
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    normalized,
+                    f"MCP HTTP Fehler: {exc}",
+                    {"base_url": self.base_url, "mcp_url": self._mcp_endpoint_url(), "protocol": self.protocol},
+                    "request_error",
+                )
         try:
             response = self._client.post(
                 f"{self.base_url}{self.execute_path}",

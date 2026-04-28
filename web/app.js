@@ -66,6 +66,7 @@ const el = {
   saveRuntime: document.getElementById("save-runtime"),
   mcpManager: document.getElementById("mcp-manager"),
   addMcpRemote: document.getElementById("add-mcp-remote"),
+  addMcpNetboxLabs: document.getElementById("add-mcp-netboxlabs"),
   saveMcpManager: document.getElementById("save-mcp-manager"),
   mcpsJson: document.getElementById("mcps-json"),
   saveMcps: document.getElementById("save-mcps"),
@@ -126,6 +127,7 @@ const state = {
   usersConfig: { groups: [], users: [] },
   personas: [],
   guideLastDraft: null,
+  mcpWorkbenchResults: {},
 };
 
 const SHOW_MCP_CONTEXT_IN_CHAT_KEY = "mono.showMcpContextInChat";
@@ -211,7 +213,27 @@ function normalizePersonas(items) {
   return Array.isArray(items) ? items.filter((item) => item && typeof item === "object") : [];
 }
 
-function defaultMcpByKind(kind) {
+function defaultMcpByKind(kind = "remote_http") {
+  if (kind === "netboxlabs_mcp_http") {
+    return {
+      id: `netbox-mcp-${Date.now()}`,
+      name: "NetBox Labs MCP",
+      description: "Generischer MCP HTTP Server auf /mcp fuer NetBox Labs",
+      kind: "remote_http",
+      enabled: true,
+      protocol: "mcp_http_v1",
+      module: "netbox",
+      base_url: "http://127.0.0.1:8000",
+      execute_path: "/mcp",
+      health_path: "/health",
+      bearer_token_env: "",
+      timeout_seconds: 20,
+      working_dir: "",
+      start_command: [],
+      stop_command: [],
+      status_command: [],
+    };
+  }
   return {
     id: `remote-${Date.now()}`,
     name: "Neuer Remote MCP",
@@ -232,6 +254,41 @@ function defaultMcpByKind(kind) {
   };
 }
 
+function protocolLabel(protocol) {
+  if (protocol === "satellite_execute_v1") return "Satellite Execute";
+  if (protocol === "mcp_http_v1") return "Generic MCP HTTP";
+  return "Remote Adapter";
+}
+
+function protocolExecuteDefault(protocol) {
+  return protocol === "mcp_http_v1" ? "/mcp" : "/execute";
+}
+
+function protocolActionSet(protocol) {
+  if (protocol === "mcp_http_v1") {
+    return [
+      { action: "health", label: "Health" },
+      { action: "handshake", label: "Handshake" },
+      { action: "probe", label: "Probe" },
+      { action: "tools", label: "Tools" },
+    ];
+  }
+  return [
+    { action: "health", label: "Health" },
+    { action: "handshake", label: "Handshake" },
+  ];
+}
+
+function protocolHint(protocol) {
+  if (protocol === "mcp_http_v1") {
+    return "Verwendet generisches MCP HTTP. Typisch fuer Server mit Endpoint /mcp, z. B. netbox-mcp-server.";
+  }
+  if (protocol === "satellite_execute_v1") {
+    return "Verwendet den Satellite Execute Adapter mit lokal abgeleiteten Capabilities.";
+  }
+  return "Verwendet den hausinternen Remote Adapter mit separatem Health- und Execute-Path.";
+}
+
 function parseCommandJson(value, fieldName) {
   let parsed = [];
   try {
@@ -246,16 +303,17 @@ function parseCommandJson(value, fieldName) {
 }
 
 function collectGuideDraft() {
+  const protocol = el.guideProtocol.value.trim() || "standard_v1";
   return {
     id: el.guideId.value.trim(),
     name: el.guideName.value.trim() || el.guideId.value.trim() || "Neuer Remote MCP",
     description: el.guideDescription.value.trim() || "Externer MCP via HTTP",
     kind: "remote_http",
     enabled: true,
-    protocol: el.guideProtocol.value.trim() || "standard_v1",
+    protocol,
     module: el.guideModule.value.trim().toLowerCase(),
     base_url: el.guideBaseUrl.value.trim(),
-    execute_path: el.guideExecutePath.value.trim() || "/execute",
+    execute_path: el.guideExecutePath.value.trim() || protocolExecuteDefault(protocol),
     health_path: el.guideHealthPath.value.trim() || "/health",
     bearer_token_env: el.guideBearerTokenEnv.value.trim(),
     timeout_seconds: Number(el.guideTimeoutSeconds.value || 15) || 15,
@@ -274,7 +332,7 @@ function syncGuideFromMcp(item) {
   el.guideProtocol.value = item.protocol || "standard_v1";
   el.guideModule.value = item.module || "";
   el.guideBaseUrl.value = item.base_url || "";
-  el.guideExecutePath.value = item.execute_path || "/execute";
+  el.guideExecutePath.value = item.execute_path || protocolExecuteDefault(item.protocol || "standard_v1");
   el.guideHealthPath.value = item.health_path || "/health";
   el.guideTimeoutSeconds.value = item.timeout_seconds ?? 15;
   el.guideBearerTokenEnv.value = item.bearer_token_env || "";
@@ -366,6 +424,7 @@ function setActiveView(view) {
   state.activeView = view;
   for (const button of el.viewButtons) {
     button.classList.toggle("active", button.dataset.viewButton === view);
+    button.setAttribute("aria-selected", button.dataset.viewButton === view ? "true" : "false");
   }
   for (const panel of el.viewPanels) {
     panel.classList.toggle("active", panel.dataset.viewPanel === view);
@@ -458,17 +517,13 @@ function showSetup(message = "") {
 function renderMcpSelector(mcps = []) {
   const toggleMarkup = mcps
     .map(
-      (item) => `<label><input type="checkbox" data-mcp-id="${escapeHtml(item.id)}" checked> ${escapeHtml(item.label || item.id)}</label>`,
+      (item) => `<label class="toggle-chip"><input type="checkbox" data-mcp-id="${escapeHtml(item.id)}" checked> ${escapeHtml(item.label || item.id)}</label>`,
     )
     .join("");
   const emptyHint = mcps.length
     ? ""
     : `<span class="scope-hint">Diesem Benutzer sind aktuell keine MCPs zugewiesen.</span>`;
-  el.mcpSelector.innerHTML = `${toggleMarkup}${emptyHint}<label><input id="show-mcp-context-in-chat" type="checkbox" ${el.showMcpContextInChat?.checked !== false ? "checked" : ""}> MCP Kontext im Chat</label>`;
-  el.showMcpContextInChat = document.getElementById("show-mcp-context-in-chat");
-  el.showMcpContextInChat.addEventListener("change", () => {
-    persistUiPreferences();
-  });
+  el.mcpSelector.innerHTML = `${toggleMarkup}${emptyHint}`;
   loadUiPreferences();
 }
 
@@ -725,61 +780,104 @@ function syncPasswordResetUsers() {
   }
 }
 
+function workbenchResultText(id) {
+  const entry = state.mcpWorkbenchResults?.[id];
+  if (!entry) return "Noch keine Aktion ausgefuehrt.";
+  return JSON.stringify(entry, null, 2);
+}
+
+function protocolSelectMarkup(selected) {
+  return `
+    <select data-field="protocol">
+      <option value="standard_v1" ${selected === "standard_v1" ? "selected" : ""}>Remote Adapter</option>
+      <option value="satellite_execute_v1" ${selected === "satellite_execute_v1" ? "selected" : ""}>Satellite Execute</option>
+      <option value="mcp_http_v1" ${selected === "mcp_http_v1" ? "selected" : ""}>Generic MCP HTTP</option>
+    </select>
+  `;
+}
+
 function renderMcpManager() {
   const config = normalizeMcpsConfig(state.mcpsConfig);
   el.mcpManager.innerHTML = config.mcps
     .map((item, index) => {
+      const protocol = item.protocol || "standard_v1";
+      const actionButtons = protocolActionSet(protocol)
+        .map(
+          (row) =>
+            `<button type="button" class="secondary" data-mcp-action="${escapeHtml(row.action)}" data-mcp-id="${escapeHtml(item.id || "")}">${escapeHtml(row.label)}</button>`,
+        )
+        .join("");
+      const controlButtons =
+        item.kind === "remote_http"
+          ? `
+              <button type="button" class="secondary" data-mcp-action="status" data-mcp-id="${escapeHtml(item.id || "")}">Status Command</button>
+              <button type="button" class="secondary" data-mcp-action="start" data-mcp-id="${escapeHtml(item.id || "")}">Start Command</button>
+              <button type="button" class="secondary" data-mcp-action="stop" data-mcp-id="${escapeHtml(item.id || "")}">Stop Command</button>
+            `
+          : "";
       return `
-        <article class="docs-card mcp-manager-grid" data-mcp-index="${index}">
-          <div class="docs-card-head">
-            <div>
+        <article class="mcp-workbench-card" data-mcp-index="${index}">
+          <div class="mcp-workbench-head">
+            <div class="mcp-title-wrap">
+              <div class="mcp-card-pills">
+                <span class="mcp-pill">${escapeHtml(protocolLabel(protocol))}</span>
+                <span class="mcp-pill">${escapeHtml(item.kind || "unknown")}</span>
+                ${item.module ? `<span class="mcp-pill">${escapeHtml(item.module)}</span>` : ""}
+              </div>
               <h3>${escapeHtml(item.name || item.id || `MCP ${index + 1}`)}</h3>
-              <p class="muted">${escapeHtml(item.kind || "unknown")} / ${escapeHtml(item.id || "-")}</p>
+              <p class="muted">${escapeHtml(item.description || "Kein Beschreibungstext vorhanden.")}</p>
             </div>
-            <div class="button-row">
-              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="status" data-mcp-id="${escapeHtml(item.id || "")}">Status</button>` : ""}
-              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="start" data-mcp-id="${escapeHtml(item.id || "")}">Start</button>` : ""}
-              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="stop" data-mcp-id="${escapeHtml(item.id || "")}">Stop</button>` : ""}
-              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="handshake" data-mcp-id="${escapeHtml(item.id || "")}">Handshake</button>` : ""}
-              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="guide" data-mcp-index="${index}">In Guide laden</button>` : ""}
+            <div class="mcp-workbench-actions">
+              <button type="button" class="secondary" data-mcp-action="save-card" data-mcp-index="${index}">Diese Karte speichern</button>
+              <button type="button" class="secondary" data-mcp-action="guide" data-mcp-index="${index}">In Guide laden</button>
               <button type="button" class="secondary" data-mcp-action="remove" data-mcp-index="${index}">Entfernen</button>
             </div>
           </div>
-          <div class="panel-grid">
-            <label>ID<input type="text" data-field="id" value="${escapeHtml(item.id || "")}"></label>
-            <label>Name<input type="text" data-field="name" value="${escapeHtml(item.name || "")}"></label>
+
+          <div class="mcp-workbench-grid">
+            <label class="span-4">ID<input type="text" data-field="id" value="${escapeHtml(item.id || "")}"></label>
+            <label class="span-4">Name<input type="text" data-field="name" value="${escapeHtml(item.name || "")}"></label>
+            <label class="span-4">Modul<input type="text" data-field="module" value="${escapeHtml(item.module || "")}"></label>
+
+            <label class="span-4">Protokoll${protocolSelectMarkup(protocol)}</label>
+            <label class="span-4">Base URL<input type="text" data-field="base_url" value="${escapeHtml(item.base_url || "")}"></label>
+            <div class="mcp-toggle-row span-4">
+              <div>
+                <strong>Aktiv</strong>
+                <div class="muted">Deaktivierte MCPs werden nicht geladen.</div>
+              </div>
+              <input type="checkbox" data-field="enabled" ${item.enabled === false ? "" : "checked"}>
+            </div>
+
+            <label class="span-4">Execute / MCP Path<input type="text" data-field="execute_path" value="${escapeHtml(item.execute_path || protocolExecuteDefault(protocol))}"></label>
+            <label class="span-4">Health Path<input type="text" data-field="health_path" value="${escapeHtml(item.health_path || "/health")}"></label>
+            <label class="span-4">Bearer Token Env<input type="text" data-field="bearer_token_env" value="${escapeHtml(item.bearer_token_env || "")}" placeholder="optional"></label>
+
+            <label class="span-4">Timeout Sekunden<input type="number" min="3" max="120" step="1" data-field="timeout_seconds" value="${escapeHtml(item.timeout_seconds ?? 15)}"></label>
+            <label class="span-8">Working Dir<input type="text" data-field="working_dir" value="${escapeHtml(item.working_dir || "")}" placeholder="/srv/http/mein-mcp"></label>
+
+            <label class="span-12">Beschreibung<input type="text" data-field="description" value="${escapeHtml(item.description || "")}"></label>
+
+            <div class="span-12 mcp-inline-meta">
+              <span class="mcp-pill">${escapeHtml(protocolHint(protocol))}</span>
+              <span class="mcp-pill">Token optional</span>
+              ${protocol === "mcp_http_v1" ? `<span class="mcp-pill">Typischer Endpoint: /mcp</span>` : ""}
+            </div>
+
+            <label class="span-12">Start Command JSON<textarea data-field="start_command" rows="3">${escapeHtml(JSON.stringify(item.start_command || [], null, 2))}</textarea></label>
+            <label class="span-12">Status Command JSON<textarea data-field="status_command" rows="3">${escapeHtml(JSON.stringify(item.status_command || [], null, 2))}</textarea></label>
+            <label class="span-12">Stop Command JSON<textarea data-field="stop_command" rows="3">${escapeHtml(JSON.stringify(item.stop_command || [], null, 2))}</textarea></label>
           </div>
-          <div class="panel-grid">
-            <label>Kind<input type="text" data-field="kind" value="${escapeHtml(item.kind || "")}" readonly></label>
-            <label>Aktiv<input type="text" data-field="enabled" value="${item.enabled === false ? "false" : "true"}"></label>
+
+          <div class="mcp-quick-actions" style="margin-top:16px;">
+            ${actionButtons}
+            ${controlButtons}
+            ${protocol === "mcp_http_v1" ? `<button type="button" class="secondary" data-mcp-action="prepare-call" data-mcp-id="${escapeHtml(item.id || "")}">Tool Call vorbereiten</button>` : ""}
           </div>
-          <label>Beschreibung<input type="text" data-field="description" value="${escapeHtml(item.description || "")}"></label>
-          ${item.kind === "remote_http" ? `
-            <div class="panel-grid">
-              <label>Protokoll
-                <select data-field="protocol">
-                  <option value="standard_v1" ${item.protocol === "satellite_execute_v1" ? "" : "selected"}>Standard MCP</option>
-                  <option value="satellite_execute_v1" ${item.protocol === "satellite_execute_v1" ? "selected" : ""}>Satellite Execute</option>
-                </select>
-              </label>
-              <label>Modul<input type="text" data-field="module" value="${escapeHtml(item.module || "")}"></label>
-            </div>
-            <div class="panel-grid">
-              <label>Base URL<input type="text" data-field="base_url" value="${escapeHtml(item.base_url || "")}"></label>
-              <label>Execute Path<input type="text" data-field="execute_path" value="${escapeHtml(item.execute_path || "/execute")}"></label>
-            </div>
-            <div class="panel-grid">
-              <label>Health Path<input type="text" data-field="health_path" value="${escapeHtml(item.health_path || "/health")}"></label>
-              <label>Bearer Token Env<input type="text" data-field="bearer_token_env" value="${escapeHtml(item.bearer_token_env || "")}"></label>
-            </div>
-            <div class="panel-grid">
-              <label>Timeout<input type="text" data-field="timeout_seconds" value="${escapeHtml(item.timeout_seconds ?? "")}"></label>
-              <label>Working Dir<input type="text" data-field="working_dir" value="${escapeHtml(item.working_dir || "")}"></label>
-            </div>
-            <label>Start Command JSON<textarea data-field="start_command" rows="3">${escapeHtml(JSON.stringify(item.start_command || [], null, 2))}</textarea></label>
-            <label>Stop Command JSON<textarea data-field="stop_command" rows="3">${escapeHtml(JSON.stringify(item.stop_command || [], null, 2))}</textarea></label>
-            <label>Status Command JSON<textarea data-field="status_command" rows="3">${escapeHtml(JSON.stringify(item.status_command || [], null, 2))}</textarea></label>
-          ` : ""}
+
+          <div class="mcp-result">
+            <pre class="console">${escapeHtml(workbenchResultText(item.id || ""))}</pre>
+          </div>
         </article>
       `;
     })
@@ -789,28 +887,25 @@ function renderMcpManager() {
 function collectMcpManagerConfig() {
   const cards = [...el.mcpManager.querySelectorAll("[data-mcp-index]")];
   const mcps = cards.map((card) => {
-    const kind = card.querySelector('[data-field="kind"]').value.trim();
-    const item = {
+    const protocol = card.querySelector('[data-field="protocol"]').value.trim() || "standard_v1";
+    return {
       id: card.querySelector('[data-field="id"]').value.trim(),
       name: card.querySelector('[data-field="name"]').value.trim(),
       description: card.querySelector('[data-field="description"]').value.trim(),
-      kind,
-      enabled: card.querySelector('[data-field="enabled"]').value.trim().toLowerCase() !== "false",
+      kind: "remote_http",
+      enabled: card.querySelector('[data-field="enabled"]').checked,
+      protocol,
+      module: card.querySelector('[data-field="module"]').value.trim().toLowerCase(),
+      base_url: card.querySelector('[data-field="base_url"]').value.trim(),
+      execute_path: card.querySelector('[data-field="execute_path"]').value.trim() || protocolExecuteDefault(protocol),
+      health_path: card.querySelector('[data-field="health_path"]').value.trim() || "/health",
+      bearer_token_env: card.querySelector('[data-field="bearer_token_env"]').value.trim(),
+      timeout_seconds: Number(card.querySelector('[data-field="timeout_seconds"]').value || 0) || 15,
+      working_dir: card.querySelector('[data-field="working_dir"]').value.trim(),
+      start_command: JSON.parse(card.querySelector('[data-field="start_command"]').value || "[]"),
+      stop_command: JSON.parse(card.querySelector('[data-field="stop_command"]').value || "[]"),
+      status_command: JSON.parse(card.querySelector('[data-field="status_command"]').value || "[]"),
     };
-    if (kind === "remote_http") {
-      item.protocol = card.querySelector('[data-field="protocol"]').value.trim() || "standard_v1";
-      item.module = card.querySelector('[data-field="module"]').value.trim().toLowerCase();
-      item.base_url = card.querySelector('[data-field="base_url"]').value.trim();
-      item.execute_path = card.querySelector('[data-field="execute_path"]').value.trim() || "/execute";
-      item.health_path = card.querySelector('[data-field="health_path"]').value.trim() || "/health";
-      item.bearer_token_env = card.querySelector('[data-field="bearer_token_env"]').value.trim();
-      item.timeout_seconds = Number(card.querySelector('[data-field="timeout_seconds"]').value || 0) || 15;
-      item.working_dir = card.querySelector('[data-field="working_dir"]').value.trim();
-      item.start_command = JSON.parse(card.querySelector('[data-field="start_command"]').value || "[]");
-      item.stop_command = JSON.parse(card.querySelector('[data-field="stop_command"]').value || "[]");
-      item.status_command = JSON.parse(card.querySelector('[data-field="status_command"]').value || "[]");
-    }
-    return item;
   });
   return normalizeMcpsConfig({ mcps });
 }
@@ -940,6 +1035,15 @@ async function runMcp(id, action, payload) {
   });
 }
 
+function recordWorkbenchResult(mcpId, payload) {
+  if (!mcpId) return;
+  state.mcpWorkbenchResults[mcpId] = payload;
+  const configViewActive = state.activeView === "config";
+  if (configViewActive) {
+    renderMcpManager();
+  }
+}
+
 async function refreshAppState({ reloadAdmin = false } = {}) {
   await loadConfig();
   await refreshHealth();
@@ -1035,6 +1139,22 @@ async function saveMcpManager() {
   state.mcpsConfig = collectMcpManagerConfig();
   el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
   await saveMcpsRaw();
+}
+
+async function saveSingleMcpCard(index) {
+  state.mcpsConfig = collectMcpManagerConfig();
+  const item = state.mcpsConfig.mcps[index];
+  if (!item) {
+    throw new Error("MCP-Karte nicht gefunden.");
+  }
+  const data = await fetchJson("/api/admin/mcps", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mcps: state.mcpsConfig.mcps }),
+  });
+  el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
+  recordWorkbenchResult(item.id, { success: true, action: "save-card", response: data, item });
+  await refreshAppState({ reloadAdmin: true });
 }
 
 async function runGuideAction(action) {
@@ -1162,6 +1282,7 @@ async function handshakeRemoteMcp(mcpId) {
     method: "POST",
   });
   el.controlOutput.textContent = JSON.stringify(data, null, 2);
+  recordWorkbenchResult(mcpId, data);
   await refreshHealth();
 }
 
@@ -1170,7 +1291,32 @@ async function controlRemoteMcp(mcpId, action) {
     method: "POST",
   });
   el.controlOutput.textContent = JSON.stringify(data, null, 2);
+  recordWorkbenchResult(mcpId, data);
   await refreshHealth();
+}
+
+async function probeRemoteMcp(mcpId, action) {
+  const data = await runMcp(mcpId, action, {});
+  recordWorkbenchResult(mcpId, data);
+  el.controlOutput.textContent = JSON.stringify(data, null, 2);
+  if (action === "health" || action === "handshake") {
+    await refreshHealth();
+  }
+}
+
+function prepareToolCallForMcp(mcpId) {
+  el.mcpId.value = mcpId;
+  el.mcpAction.value = "call";
+  el.mcpPayload.value = JSON.stringify(
+    {
+      tool_name: "get_objects",
+      arguments: {},
+    },
+    null,
+    2,
+  );
+  setActiveView("tools");
+  el.mcpOutput.textContent = "Tool Call vorbereitet. Aktion und Payload jetzt im Direct MCP Call anpassen.";
 }
 
 async function saveSystemPrompt() {
@@ -1476,7 +1622,10 @@ el.guideAdopt.addEventListener("click", async () => {
   }
 });
 
-for (const [button, kind] of [[el.addMcpRemote, "remote_http"]]) {
+for (const [button, kind] of [
+  [el.addMcpRemote, "remote_http"],
+  [el.addMcpNetboxLabs, "netboxlabs_mcp_http"],
+]) {
   if (!button) continue;
   button.addEventListener("click", () => {
     state.mcpsConfig = normalizeMcpsConfig(state.mcpsConfig);
@@ -1567,6 +1716,15 @@ el.mcpManager.addEventListener("click", async (event) => {
     renderMcpManager();
     return;
   }
+  const saveButton = event.target.closest('button[data-mcp-action="save-card"]');
+  if (saveButton) {
+    try {
+      await saveSingleMcpCard(Number(saveButton.dataset.mcpIndex));
+    } catch (error) {
+      el.controlOutput.textContent = String(error.message || error);
+    }
+    return;
+  }
   const guideButton = event.target.closest('button[data-mcp-action="guide"]');
   if (guideButton) {
     const index = Number(guideButton.dataset.mcpIndex);
@@ -1575,14 +1733,24 @@ el.mcpManager.addEventListener("click", async (event) => {
     el.guideOutput.textContent = JSON.stringify({ success: true, message: "MCP in Guide geladen.", id: item?.id || "" }, null, 2);
     return;
   }
-  const handshakeButton = event.target.closest('button[data-mcp-action="handshake"]');
-  if (handshakeButton) {
+  const prepareCallButton = event.target.closest('button[data-mcp-action="prepare-call"]');
+  if (prepareCallButton) {
+    prepareToolCallForMcp(prepareCallButton.dataset.mcpId);
+    return;
+  }
+  const probeButton = event.target.closest('button[data-mcp-action="health"], button[data-mcp-action="handshake"], button[data-mcp-action="probe"], button[data-mcp-action="tools"]');
+  if (probeButton) {
     try {
       await saveMcpManager();
-      await handshakeRemoteMcp(handshakeButton.dataset.mcpId);
+      if (probeButton.dataset.mcpAction === "handshake") {
+        await handshakeRemoteMcp(probeButton.dataset.mcpId);
+      } else {
+        await probeRemoteMcp(probeButton.dataset.mcpId, probeButton.dataset.mcpAction);
+      }
     } catch (error) {
       el.controlOutput.textContent = String(error.message || error);
     }
+    return;
   }
   const controlButton = event.target.closest('button[data-mcp-action="start"], button[data-mcp-action="stop"], button[data-mcp-action="status"]');
   if (controlButton) {
@@ -1594,6 +1762,18 @@ el.mcpManager.addEventListener("click", async (event) => {
     }
   }
 });
+
+el.guideProtocol.addEventListener("change", () => {
+  if (!el.guideExecutePath.value.trim() || el.guideExecutePath.value.trim() === "/execute" || el.guideExecutePath.value.trim() === "/mcp") {
+    el.guideExecutePath.value = protocolExecuteDefault(el.guideProtocol.value.trim() || "standard_v1");
+  }
+});
+
+if (el.showMcpContextInChat) {
+  el.showMcpContextInChat.addEventListener("change", () => {
+    persistUiPreferences();
+  });
+}
 
 (async function bootstrap() {
   try {

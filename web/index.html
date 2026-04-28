@@ -9,544 +9,572 @@
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <div id="login-gate" class="panel" style="max-width:520px;margin:32px auto;">
-    <div class="panel-head">
-      <div>
-        <h2>Login</h2>
-        <p class="muted">Nutzer sehen nur ihre erlaubten MCPs. Konfiguration und Betrieb sind Admin-only.</p>
+  <a class="skip-link" href="#main-content">Direkt zum Inhalt</a>
+
+  <div id="login-gate" class="auth-shell">
+    <section class="auth-card panel" aria-labelledby="login-title">
+      <div class="auth-copy">
+        <p class="eyebrow">woddi-ai-control</p>
+        <h1 id="login-title">Control Desk fuer MCP, Runtime und Betrieb</h1>
+        <p class="muted">Eine saubere Operator-Oberflaeche fuer externe MCP-Dienste, LLM-Runtime, Benutzer und Diagnosen.</p>
       </div>
-    </div>
-    <div id="login-form">
-      <label>
-        Benutzername
-        <input id="login-username" type="text" autocomplete="username">
-      </label>
-      <label>
-        Passwort
-        <input id="login-password" type="password" autocomplete="current-password">
-      </label>
-      <div class="button-row">
-        <button id="login-submit">Anmelden</button>
+
+      <div id="login-form" class="auth-form">
+        <label>
+          Benutzername
+          <input id="login-username" type="text" autocomplete="username">
+        </label>
+        <label>
+          Passwort
+          <input id="login-password" type="password" autocomplete="current-password">
+        </label>
+        <div class="button-row">
+          <button id="login-submit">Anmelden</button>
+        </div>
       </div>
-    </div>
-    <div id="setup-form" hidden>
-      <p class="muted">Kein Admin eingerichtet. Lege jetzt den ersten Administrator an.</p>
-      <label>
-        Admin-Benutzername
-        <input id="setup-username" type="text" autocomplete="username">
-      </label>
-      <label>
-        Anzeigename
-        <input id="setup-display-name" type="text" autocomplete="name">
-      </label>
-      <label>
-        Passwort
-        <input id="setup-password" type="password" autocomplete="new-password">
-      </label>
-      <label>
-        Passwort wiederholen
-        <input id="setup-password-confirm" type="password" autocomplete="new-password">
-      </label>
-      <div class="button-row">
-        <button id="setup-submit">Initiales Admin-Konto anlegen</button>
+
+      <div id="setup-form" class="auth-form" hidden>
+        <p class="muted">Kein Admin eingerichtet. Lege jetzt den ersten Administrator an.</p>
+        <label>
+          Admin-Benutzername
+          <input id="setup-username" type="text" autocomplete="username">
+        </label>
+        <label>
+          Anzeigename
+          <input id="setup-display-name" type="text" autocomplete="name">
+        </label>
+        <label>
+          Passwort
+          <input id="setup-password" type="password" autocomplete="new-password">
+        </label>
+        <label>
+          Passwort wiederholen
+          <input id="setup-password-confirm" type="password" autocomplete="new-password">
+        </label>
+        <div class="button-row">
+          <button id="setup-submit">Initiales Admin-Konto anlegen</button>
+        </div>
       </div>
-    </div>
-    <pre id="login-output" class="console"></pre>
+
+      <pre id="login-output" class="console"></pre>
+    </section>
   </div>
 
   <div id="app-shell" hidden>
-  <div class="noise" aria-hidden="true"></div>
-  <header class="hero">
-    <div class="brand-lockup">
-      <img class="brand-mark" src="/static/logo-mark.svg" alt="woddi-ai control Logo">
-      <div class="brand-copy">
-        <p class="eyebrow">woddi-ai-control</p>
-        <h1>MCP Control Desk fuer externe Module</h1>
-        <p class="subline">Weboberflaeche fuer externe MCP-Dienste mit Guide, Runtime-Reload und Plattformfokus auf Ubuntu sowie Arch/CachyOS.</p>
-      </div>
+    <div class="app-backdrop" aria-hidden="true">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="grid-glow"></div>
     </div>
-    <div class="hero-badges">
-      <span id="viewer-pill" class="pill alt">User: -</span>
-      <span id="release-pill" class="pill alt">Release: -</span>
-      <span id="health-pill" class="pill">Health: lade...</span>
-      <span id="llm-pill" class="pill alt">LLM: -</span>
-      <button id="logout-button" class="secondary">Logout</button>
-    </div>
-  </header>
 
-  <main class="shell">
-    <nav class="view-tabs" aria-label="Bereiche">
-      <button class="tab-button active" data-view-button="overview">Uebersicht</button>
+    <header class="app-header" role="banner">
+      <div class="brand-lockup">
+        <img class="brand-mark" src="/static/logo-mark.svg" alt="">
+        <div>
+          <p class="eyebrow">woddi-ai-control</p>
+          <h1>Modern MCP Operations Desk</h1>
+          <p class="subline">Chat, Diagnostics, MCP Workbench und Runtime-Steuerung in einer klaren Operator-Oberflaeche.</p>
+        </div>
+      </div>
+
+      <div class="header-status" aria-label="Systemstatus">
+        <span id="viewer-pill" class="pill alt">User: -</span>
+        <span id="release-pill" class="pill alt">Release: -</span>
+        <span id="health-pill" class="pill">Health: lade...</span>
+        <span id="llm-pill" class="pill alt">LLM: -</span>
+        <button id="logout-button" class="secondary">Logout</button>
+      </div>
+    </header>
+
+    <nav class="top-nav" aria-label="Bereiche">
+      <button class="tab-button active" data-view-button="overview">Overview</button>
       <button class="tab-button" data-view-button="tools">Tools</button>
-      <button class="tab-button admin-only" data-view-button="config">Konfiguration</button>
+      <button class="tab-button admin-only" data-view-button="config">MCP Workbench</button>
       <button class="tab-button admin-only" data-view-button="logs">Logs</button>
     </nav>
 
-    <section class="view-panel active" data-view-panel="overview">
-      <div class="overview-grid">
-        <section class="panel chat-panel">
-          <div class="panel-head">
-            <div>
-              <h2>Chat</h2>
-              <p class="muted">Streaming mit Kontext aus den freigegebenen externen MCPs.</p>
-            </div>
-            <div class="session-wrap">
-              <label>
+    <main id="main-content" class="shell" role="main">
+      <section class="view-panel active" data-view-panel="overview">
+        <div class="hero-band">
+          <article class="hero-card">
+            <p class="eyebrow">Session</p>
+            <h2>Chat zuerst, Diagnose immer daneben</h2>
+            <p>Die Startseite priorisiert den eigentlichen Arbeitsfluss: Nachricht schreiben, relevante MCPs waehlen, Antwort pruefen und Status derselben Systeme sofort daneben sehen.</p>
+          </article>
+          <article class="hero-card hero-stats">
+            <div id="role-summary" class="scope-row" hidden></div>
+            <div id="config-summary" class="summary-grid"></div>
+          </article>
+        </div>
+
+        <div class="workspace-grid">
+          <section class="panel chat-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Assistant</p>
+                <h2>Chat Workspace</h2>
+                <p class="muted">Streaming mit Kontext aus den freigegebenen MCPs, inklusive Zitierungen und Debug-Ansicht.</p>
+              </div>
+              <label class="session-field">
                 Session
                 <input id="session-id" type="text" value="woddi-ai-control-session">
               </label>
             </div>
-          </div>
 
-          <div id="role-summary" class="scope-row" hidden></div>
-
-          <div id="mcp-selector" class="scope-row">
-            <label><input id="show-mcp-context-in-chat" type="checkbox" checked> MCP Kontext im Chat</label>
-          </div>
-
-          <div id="chat-output" class="chat-output"></div>
-
-          <div class="chat-compose">
-            <textarea id="chat-input" rows="4" placeholder="Frage stellen oder direkt /mcp mein-modul query {&quot;query&quot;:&quot;status cluster-a&quot;}"></textarea>
-            <div class="compose-actions">
-              <button id="send-chat">Senden</button>
-              <button id="clear-chat" class="secondary">Leeren</button>
+            <div class="chat-toolbar">
+              <div id="mcp-selector" class="scope-row"></div>
+              <label class="toggle-chip"><input id="show-mcp-context-in-chat" type="checkbox" checked> MCP Kontext im Chat</label>
             </div>
-          </div>
 
-          <div class="meta-grid collapsible-grid">
-            <details class="meta-fold" open>
-              <summary>Zitierungen</summary>
+            <div id="chat-output" class="chat-output" aria-live="polite"></div>
+
+            <div class="chat-compose">
+              <label class="compose-field">
+                Nachricht
+                <textarea id="chat-input" rows="5" placeholder="Frage stellen oder direkt /mcp mein-modul query {&quot;query&quot;:&quot;status cluster-a&quot;}"></textarea>
+              </label>
+              <div class="compose-actions">
+                <button id="send-chat">Senden</button>
+                <button id="clear-chat" class="secondary">Leeren</button>
+              </div>
+            </div>
+
+            <div class="meta-grid">
               <article class="meta-card">
+                <div class="meta-card-head">
+                  <h3>Zitierungen</h3>
+                </div>
                 <ul id="citations" class="list"></ul>
               </article>
-            </details>
-            <details class="meta-fold">
-              <summary>MCP Debug</summary>
               <article class="meta-card">
+                <div class="meta-card-head">
+                  <h3>MCP Debug</h3>
+                </div>
                 <pre id="mcp-debug" class="console"></pre>
               </article>
-            </details>
-          </div>
-        </section>
+            </div>
+          </section>
 
-        <aside class="stack right-rail">
-          <section class="panel admin-only">
+          <aside class="right-rail" aria-label="Ergaenzende Informationen">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">System</p>
+                  <h2>Live Status</h2>
+                  <p class="muted">Schneller Blick auf Runtime, aktive MCPs und relevante Pfade.</p>
+                </div>
+                <button id="refresh-health" class="secondary">Refresh</button>
+              </div>
+              <div class="meta-grid compact">
+                <article class="meta-card">
+                  <h3>Pfade</h3>
+                  <div id="paths-list" class="kv-list"></div>
+                </article>
+                <article class="meta-card admin-only">
+                  <h3>Platform</h3>
+                  <div id="platform-summary" class="summary-grid"></div>
+                  <div id="platform-checks" class="kv-list"></div>
+                  <pre id="platform-commands" class="console compact-console"></pre>
+                </article>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">MCP</p>
+                  <h2>Service Health</h2>
+                  <p class="muted">Aktive MCPs mit kompakten Aktionen fuer Health und Reindex.</p>
+                </div>
+              </div>
+              <div id="mcp-cards" class="mcp-cards"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Observability</p>
+                  <h2>Performance</h2>
+                  <p class="muted">Rolling Metriken fuer Chat, Retrieval und wichtige Endpunkte.</p>
+                </div>
+              </div>
+              <div id="performance-summary" class="summary-grid"></div>
+              <div class="meta-grid compact">
+                <article class="meta-card">
+                  <h3>Breakdown</h3>
+                  <div id="performance-breakdown" class="kv-list"></div>
+                </article>
+                <article class="meta-card">
+                  <h3>Endpoints</h3>
+                  <div id="performance-endpoints" class="kv-list"></div>
+                </article>
+              </div>
+              <article class="meta-card">
+                <h3>Recent Requests</h3>
+                <pre id="performance-recent" class="console compact-console"></pre>
+              </article>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view-panel" data-view-panel="tools">
+        <div class="tools-grid">
+          <section class="panel">
             <div class="panel-head">
               <div>
-                <h2>System Readiness</h2>
-                <p class="muted">Vor dem ersten Start: Plattform erkennen, Preflight ausfuehren und den passenden Setup-Pfad nutzen.</p>
+                <p class="eyebrow">Direct Access</p>
+                <h2>Direkter MCP Call</h2>
+                <p class="muted">Fuer exakte Diagnosen gegen einen freigegebenen MCP. Ideal fuer Tool-Calls und schnelle Payload-Tests.</p>
               </div>
             </div>
-            <div id="platform-summary" class="summary-grid"></div>
-            <div class="meta-grid compact">
-              <article class="meta-card">
-                <h3>Checks</h3>
-                <div id="platform-checks" class="kv-list"></div>
-              </article>
-              <article class="meta-card">
-                <h3>Quickstart</h3>
-                <pre id="platform-commands" class="console compact-console"></pre>
-              </article>
-            </div>
+            <label>
+              MCP
+              <select id="mcp-id"></select>
+            </label>
+            <label>
+              Action
+              <input id="mcp-action" type="text" value="search">
+            </label>
+            <label>
+              JSON Payload
+              <textarea id="mcp-payload" rows="10">{}</textarea>
+            </label>
+            <button id="run-mcp">Ausfuehren</button>
+            <pre id="mcp-output" class="console"></pre>
           </section>
 
           <section class="panel">
             <div class="panel-head">
               <div>
-                <h2>Systemstatus</h2>
-              <p class="muted">Schneller Blick auf LLM, aktive MCPs und relevante Pfade.</p>
+                <p class="eyebrow">Account</p>
+                <h2>Passwort aendern</h2>
+                <p class="muted">Eigenes Passwort aendern, ohne Benutzerdaten manuell anfassen zu muessen.</p>
               </div>
-              <button id="refresh-health" class="secondary">Refresh</button>
             </div>
-            <div id="config-summary" class="summary-grid"></div>
-          <div class="meta-grid compact">
-            <article class="meta-card">
-              <h3>Pfade</h3>
-              <div id="paths-list" class="kv-list"></div>
-            </article>
-          </div>
+            <label>
+              Aktuelles Passwort
+              <input id="change-password-current" type="password" autocomplete="current-password">
+            </label>
+            <label>
+              Neues Passwort
+              <input id="change-password-new" type="password" autocomplete="new-password">
+            </label>
+            <label>
+              Neues Passwort wiederholen
+              <input id="change-password-confirm" type="password" autocomplete="new-password">
+            </label>
+            <button id="change-password-submit" class="secondary">Passwort aendern</button>
+            <pre id="change-password-output" class="console"></pre>
           </section>
 
-          <section class="panel">
+          <section class="panel panel-span-2">
             <div class="panel-head">
               <div>
-                <h2>MCP Status</h2>
-              <p class="muted">Health und Erreichbarkeit der aktiven externen MCPs.</p>
+                <p class="eyebrow">Control Plane</p>
+                <h2>Runtime und Prozesssteuerung</h2>
+                <p class="muted">Reload, Restart und Shutdown bleiben getrennt von MCP-Editing, damit riskante Aktionen nicht zwischen Formularfeldern verschwinden.</p>
               </div>
             </div>
-            <div id="mcp-cards" class="mcp-cards scroll-box"></div>
+            <div class="button-row admin-only">
+              <button id="reload-runtime" class="secondary">Runtime Reload</button>
+              <button id="restart-app" class="secondary">Restart Main</button>
+              <button id="shutdown-app" class="secondary">Shutdown Main</button>
+            </div>
+            <pre id="control-output" class="console"></pre>
           </section>
+        </div>
+      </section>
 
-          <section class="panel">
+      <section class="view-panel" data-view-panel="config">
+        <div class="config-grid">
+          <section class="panel panel-span-3">
             <div class="panel-head">
               <div>
-                <h2>Performance</h2>
-                <p class="muted">Rolling Metriken fuer Chat, Retrieval und wichtige Endpunkte.</p>
+                <p class="eyebrow">Workbench</p>
+                <h2>MCP Workbench</h2>
+                <p class="muted">Jedes MCP als eigene Karte mit Status, Aktivierung, Test, Probe, Handshake, Start/Stop/Status und klaren Eingabefeldern. Keine verstreuten Admin-Formulare mehr.</p>
+              </div>
+              <div class="button-row">
+                <button id="add-mcp-remote" class="secondary">Remote Adapter</button>
+                <button id="add-mcp-netboxlabs" class="secondary">NetBox Labs MCP</button>
+                <button id="save-mcp-manager">Alle MCPs speichern</button>
               </div>
             </div>
-            <div id="performance-summary" class="summary-grid"></div>
-            <div class="meta-grid compact">
-              <article class="meta-card">
-                <h3>Breakdown</h3>
-                <div id="performance-breakdown" class="kv-list"></div>
-              </article>
-              <article class="meta-card">
-                <h3>Endpoints</h3>
-                <div id="performance-endpoints" class="kv-list"></div>
-              </article>
-            </div>
-            <article class="meta-card">
-              <h3>Recent Requests</h3>
-              <pre id="performance-recent" class="console compact-console"></pre>
-            </article>
+            <div id="mcp-manager" class="mcp-manager-stack" aria-label="MCP Workbench"></div>
           </section>
-        </aside>
-      </div>
-    </section>
 
-    <section class="view-panel" data-view-panel="tools">
-      <div class="panel-grid two-up">
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Direkter MCP Call</h2>
-              <p class="muted">Fuer exakte Abfragen gegen einen freigegebenen externen MCP.</p>
+          <section class="panel panel-span-2">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Guide</p>
+                <h2>MCP Guide</h2>
+                <p class="muted">Gefuehrte Vorpruefung fuer neue MCPs, bevor sie in den Workbench uebernommen werden.</p>
+              </div>
+              <div class="button-row">
+                <button id="guide-validate" class="secondary">Validieren</button>
+                <button id="guide-health" class="secondary">Health testen</button>
+                <button id="guide-handshake" class="secondary">Handshake testen</button>
+                <button id="guide-adopt">In Workbench uebernehmen</button>
+              </div>
             </div>
-          </div>
-          <label>
-            MCP
-            <select id="mcp-id"></select>
-          </label>
-          <label>
-            Action
-            <input id="mcp-action" type="text" value="search">
-          </label>
-          <label>
-            JSON Payload
-            <textarea id="mcp-payload" rows="8">{}</textarea>
-          </label>
-          <button id="run-mcp">Ausfuehren</button>
-          <pre id="mcp-output" class="console"></pre>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Passwort</h2>
-              <p class="muted">Eigenes Passwort aendern, ohne die User-JSON anzufassen.</p>
-            </div>
-          </div>
-          <label>
-            Aktuelles Passwort
-            <input id="change-password-current" type="password" autocomplete="current-password">
-          </label>
-          <label>
-            Neues Passwort
-            <input id="change-password-new" type="password" autocomplete="new-password">
-          </label>
-          <label>
-            Neues Passwort wiederholen
-            <input id="change-password-confirm" type="password" autocomplete="new-password">
-          </label>
-          <button id="change-password-submit" class="secondary">Passwort aendern</button>
-          <pre id="change-password-output" class="console"></pre>
-        </section>
-
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>Control Plane</h2>
-              <p class="muted">Reload und Prozesssteuerung bleiben separat von Konfiguration und Logs.</p>
-            </div>
-          </div>
-          <div class="card-actions admin-only">
-            <button id="reload-runtime" class="secondary">Runtime Reload</button>
-            <button id="restart-app" class="secondary">Restart Main</button>
-            <button id="shutdown-app" class="secondary">Shutdown Main</button>
-          </div>
-          <pre id="control-output" class="console"></pre>
-        </section>
-      </div>
-    </section>
-
-    <section class="view-panel" data-view-panel="config">
-      <div class="panel-grid">
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>MCP Guide</h2>
-              <p class="muted">Gefuehrter Ubuntu-Check fuer neue MCPs: Basisdaten, lokale Kommandos, Health und Handshake vor der Uebernahme in den Manager.</p>
+            <div class="guide-grid">
+              <label>
+                MCP ID
+                <input id="guide-id" type="text" placeholder="remote-main">
+              </label>
+              <label>
+                Anzeigename
+                <input id="guide-name" type="text" placeholder="Remote Main">
+              </label>
+              <label class="guide-span-2">
+                Beschreibung
+                <input id="guide-description" type="text" placeholder="Externer MCP fuer Plattformbetrieb oder NetBox">
+              </label>
+              <label>
+                Protokoll
+                <select id="guide-protocol">
+                  <option value="standard_v1">Remote Adapter</option>
+                  <option value="satellite_execute_v1">Satellite Execute</option>
+                  <option value="mcp_http_v1">Generic MCP HTTP</option>
+                </select>
+              </label>
+              <label>
+                Modul
+                <input id="guide-module" type="text" placeholder="netbox">
+              </label>
+              <label>
+                Base URL
+                <input id="guide-base-url" type="text" placeholder="http://127.0.0.1:8000">
+              </label>
+              <label>
+                Execute / MCP Path
+                <input id="guide-execute-path" type="text" value="/execute">
+              </label>
+              <label>
+                Health Path
+                <input id="guide-health-path" type="text" value="/health">
+              </label>
+              <label>
+                Timeout Sekunden
+                <input id="guide-timeout-seconds" type="number" min="3" max="120" step="1" value="15">
+              </label>
+              <label>
+                Bearer Token Env
+                <input id="guide-bearer-token-env" type="text" placeholder="REMOTE_MCP_TOKEN">
+              </label>
+              <label class="guide-span-2">
+                Working Dir
+                <input id="guide-working-dir" type="text" placeholder="/srv/http/mein-mcp">
+              </label>
+              <label class="guide-span-2">
+                Start Command JSON
+                <textarea id="guide-start-command" rows="3">[]</textarea>
+              </label>
+              <label class="guide-span-2">
+                Status Command JSON
+                <textarea id="guide-status-command" rows="3">[]</textarea>
+              </label>
+              <label class="guide-span-2">
+                Stop Command JSON
+                <textarea id="guide-stop-command" rows="3">[]</textarea>
+              </label>
             </div>
             <div class="button-row">
-              <button id="guide-validate" class="secondary">1. Validieren</button>
-              <button id="guide-health" class="secondary">2. Health testen</button>
-              <button id="guide-handshake" class="secondary">3. Handshake testen</button>
-              <button id="guide-adopt">In Manager uebernehmen</button>
+              <button id="guide-run-status-command" class="secondary">Status Command testen</button>
+              <button id="guide-start-command-run" class="secondary">Start Command testen</button>
+              <button id="guide-stop-command-run" class="secondary">Stop Command testen</button>
             </div>
-          </div>
-          <div class="guide-grid">
-            <label>
-              MCP ID
-              <input id="guide-id" type="text" placeholder="remote-main">
-            </label>
-            <label>
-              Anzeigename
-              <input id="guide-name" type="text" placeholder="Remote Main">
-            </label>
-            <label class="guide-span-2">
-              Beschreibung
-              <input id="guide-description" type="text" placeholder="Externer MCP fuer Cluster oder Plattformbetrieb">
-            </label>
-            <label>
-              Protokoll
-              <select id="guide-protocol">
-                <option value="standard_v1">Standard MCP</option>
-                <option value="satellite_execute_v1">Satellite Execute</option>
-              </select>
-            </label>
-            <label>
-              Modul
-              <input id="guide-module" type="text" placeholder="netbox">
-            </label>
+            <div class="meta-grid compact">
+              <article class="meta-card">
+                <h3>Guide Checks</h3>
+                <div id="guide-checks" class="kv-list"></div>
+              </article>
+              <article class="meta-card">
+                <h3>Hinweise</h3>
+                <div id="guide-hints" class="kv-list"></div>
+              </article>
+            </div>
+            <pre id="guide-output" class="console"></pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">LLM</p>
+                <h2>LLM Verbindung</h2>
+                <p class="muted">Base URL, Modell und Timeout pflegen und sofort gegen den Upstream pruefen.</p>
+              </div>
+              <button id="save-llm-settings">LLM speichern</button>
+            </div>
             <label>
               Base URL
-              <input id="guide-base-url" type="text" placeholder="http://127.0.0.1:8080">
+              <input id="llm-base-url" type="text" placeholder="http://llm-host:11434/v1">
             </label>
-            <label>
-              Execute Path
-              <input id="guide-execute-path" type="text" value="/execute">
-            </label>
-            <label>
-              Health Path
-              <input id="guide-health-path" type="text" value="/health">
-            </label>
-            <label class="guide-span-2">
-              Timeout Sekunden
-              <input id="guide-timeout-seconds" type="number" min="3" max="120" step="1" value="15">
-            </label>
-            <label>
-              Bearer Token Env
-              <input id="guide-bearer-token-env" type="text" placeholder="REMOTE_MCP_TOKEN">
-            </label>
-            <label class="guide-span-2">
-              Working Dir
-              <input id="guide-working-dir" type="text" placeholder="/srv/http/mein-mcp">
-            </label>
-            <label class="guide-span-2">
-              Start Command JSON
-              <textarea id="guide-start-command" rows="3">[]</textarea>
-            </label>
-            <label class="guide-span-2">
-              Status Command JSON
-              <textarea id="guide-status-command" rows="3">[]</textarea>
-            </label>
-            <label class="guide-span-2">
-              Stop Command JSON
-              <textarea id="guide-stop-command" rows="3">[]</textarea>
-            </label>
-          </div>
-          <div class="button-row">
-            <button id="guide-run-status-command" class="secondary">Status Command testen</button>
-            <button id="guide-start-command-run" class="secondary">Start Command testen</button>
-            <button id="guide-stop-command-run" class="secondary">Stop Command testen</button>
-          </div>
-          <div class="meta-grid compact">
-            <article class="meta-card">
-              <h3>Guide Checks</h3>
-              <div id="guide-checks" class="kv-list"></div>
-            </article>
-            <article class="meta-card">
-              <h3>Hinweise</h3>
-              <div id="guide-hints" class="kv-list"></div>
-            </article>
-          </div>
-          <pre id="guide-output" class="console"></pre>
-        </section>
-
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>MCP Manager</h2>
-              <p class="muted">Externe MCP-Module per HTTP verwalten. Optional koennen Start-, Stop- und Status-Kommandos hinterlegt werden.</p>
+            <div class="panel-grid">
+              <label>
+                Modell
+                <input id="llm-model" type="text" placeholder="llama3.2:latest">
+              </label>
+              <label>
+                Fallback Modell
+                <input id="llm-fallback-model" type="text" placeholder="optional">
+              </label>
+            </div>
+            <div class="panel-grid">
+              <label>
+                Timeout Sekunden
+                <input id="llm-timeout-seconds" type="number" min="5" max="900" step="1">
+              </label>
+              <label>
+                Max Tokens
+                <input id="llm-max-tokens" type="number" min="128" max="8192" step="1">
+              </label>
             </div>
             <div class="button-row">
-              <button id="add-mcp-remote" class="secondary">Remote MCP</button>
-              <button id="save-mcp-manager">Manager speichern</button>
+              <button id="probe-llm" class="secondary">LLM Probe</button>
             </div>
-          </div>
-          <div id="mcp-manager" class="docs-grid"></div>
-        </section>
+            <pre id="llm-probe-output" class="console"></pre>
+          </section>
 
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>MCP Raw Config</h2>
-              <p class="muted">Fallback fuer direkte Bearbeitung von <code>mcps.local.json</code>.</p>
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Users</p>
+                <h2>Passwort Reset</h2>
+                <p class="muted">Admin-Reset fuer bestehende Benutzer ohne JSON-Edit.</p>
+              </div>
             </div>
-          </div>
-          <label>
-            mcps.local.json
-            <textarea id="mcps-json" rows="18"></textarea>
-          </label>
-          <button id="save-mcps" class="secondary">MCPs speichern</button>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Passwd</h2>
-              <p class="muted">User, Gruppen, Persona und erlaubte MCP-IDs. Passwort-Aenderungen laufen ueber die separaten Passwort-Formulare.</p>
-            </div>
-          </div>
-          <label>
-            passwd.json
-            <textarea id="users-json" rows="18"></textarea>
-          </label>
-          <button id="save-users" class="secondary">User speichern</button>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Passwort Reset</h2>
-              <p class="muted">Admin-Reset fuer bestehende Benutzer ohne JSON-Edit.</p>
-            </div>
-          </div>
-          <label>
-            Benutzer
-            <select id="password-reset-username"></select>
-          </label>
-          <label>
-            Neues Passwort
-            <input id="password-reset-new" type="password" autocomplete="new-password">
-          </label>
-          <label>
-            Neues Passwort wiederholen
-            <input id="password-reset-confirm" type="password" autocomplete="new-password">
-          </label>
-          <button id="password-reset-submit" class="secondary">Passwort zuruecksetzen</button>
-          <pre id="password-reset-output" class="console"></pre>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Personas</h2>
-              <p class="muted">Menschenlesbare Verhaltensdateien unter <code>personas/*.md</code>.</p>
-            </div>
-            <button id="save-persona" class="secondary">Persona speichern</button>
-          </div>
-          <label>
-            Persona
-            <select id="persona-id"></select>
-          </label>
-          <label>
-            Inhalt
-            <textarea id="persona-content" rows="18"></textarea>
-          </label>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>LLM Verbindung</h2>
-              <p class="muted">Base URL, Modell und Timeout direkt pflegen und sofort gegen den Upstream pruefen.</p>
-            </div>
-            <button id="save-llm-settings">LLM speichern</button>
-          </div>
-          <label>
-            Base URL
-            <input id="llm-base-url" type="text" placeholder="http://llm-host:11434/v1">
-          </label>
-          <div class="panel-grid">
             <label>
-              Modell
-              <input id="llm-model" type="text" placeholder="llama3.2:latest">
+              Benutzer
+              <select id="password-reset-username"></select>
             </label>
             <label>
-              Fallback Modell
-              <input id="llm-fallback-model" type="text" placeholder="optional">
-            </label>
-          </div>
-          <div class="panel-grid">
-            <label>
-              Timeout Sekunden
-              <input id="llm-timeout-seconds" type="number" min="5" max="900" step="1">
+              Neues Passwort
+              <input id="password-reset-new" type="password" autocomplete="new-password">
             </label>
             <label>
-              Max Tokens
-              <input id="llm-max-tokens" type="number" min="128" max="8192" step="1">
+              Neues Passwort wiederholen
+              <input id="password-reset-confirm" type="password" autocomplete="new-password">
             </label>
-          </div>
-          <div class="button-row">
-            <button id="probe-llm" class="secondary">LLM Probe</button>
-          </div>
-          <pre id="llm-probe-output" class="console"></pre>
-        </section>
+            <button id="password-reset-submit" class="secondary">Passwort zuruecksetzen</button>
+            <pre id="password-reset-output" class="console"></pre>
+          </section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Runtime Settings</h2>
-              <p class="muted">LLM-, App- und Chat-Parameter persistent aendern.</p>
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Prompting</p>
+                <h2>Personas</h2>
+                <p class="muted">Menschenlesbare Verhaltensdateien unter <code>personas/*.md</code>.</p>
+              </div>
+              <button id="save-persona" class="secondary">Persona speichern</button>
             </div>
-          </div>
-          <label>
-            Runtime JSON
-            <textarea id="runtime-json" rows="16"></textarea>
-          </label>
-          <button id="save-runtime">Runtime speichern</button>
-        </section>
-
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>System Prompt</h2>
-              <p class="muted">Prompt und AI-Verhalten zentral und persistent anpassen.</p>
-            </div>
-          </div>
-          <label>
-            Prompt
-            <textarea id="system-prompt" rows="14"></textarea>
-          </label>
-          <button id="save-system-prompt" class="secondary">Prompt speichern</button>
-        </section>
-      </div>
-    </section>
-
-    <section class="view-panel" data-view-panel="logs">
-      <div class="panel-grid">
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>Logs</h2>
-              <p class="muted">Betriebslogs getrennt vom Konfigurationsbereich. App- und Service-Log koennen separat gelesen werden.</p>
-            </div>
-            <button id="refresh-logs" class="secondary">Logs laden</button>
-          </div>
-          <div class="toolbar">
             <label>
-              Datei
-              <select id="log-file">
-                <option value="service">service</option>
-                <option value="app">app</option>
-              </select>
+              Persona
+              <select id="persona-id"></select>
             </label>
             <label>
-              Zeilen
-              <select id="log-lines">
-                <option value="80">80</option>
-                <option value="160" selected>160</option>
-                <option value="300">300</option>
-              </select>
+              Inhalt
+              <textarea id="persona-content" rows="18"></textarea>
             </label>
-          </div>
-          <pre id="log-output" class="console log-console"></pre>
-        </section>
-      </div>
-    </section>
-  </main>
+          </section>
+
+          <section class="panel panel-span-2">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Prompting</p>
+                <h2>System Prompt</h2>
+                <p class="muted">Prompt und AI-Verhalten zentral und persistent anpassen.</p>
+              </div>
+            </div>
+            <label>
+              Prompt
+              <textarea id="system-prompt" rows="14"></textarea>
+            </label>
+            <button id="save-system-prompt" class="secondary">Prompt speichern</button>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Runtime</p>
+                <h2>Runtime Settings</h2>
+                <p class="muted">LLM-, App- und Chat-Parameter persistent aendern.</p>
+              </div>
+            </div>
+            <label>
+              Runtime JSON
+              <textarea id="runtime-json" rows="16"></textarea>
+            </label>
+            <button id="save-runtime">Runtime speichern</button>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Fallback</p>
+                <h2>MCP Raw Config</h2>
+                <p class="muted">Direkte Bearbeitung von <code>mcps.local.json</code> bleibt verfuegbar, aber klar als Fallback markiert.</p>
+              </div>
+            </div>
+            <label>
+              mcps.local.json
+              <textarea id="mcps-json" rows="16"></textarea>
+            </label>
+            <button id="save-mcps" class="secondary">MCPs speichern</button>
+          </section>
+
+          <section class="panel panel-span-3">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Fallback</p>
+                <h2>Passwd</h2>
+                <p class="muted">User, Gruppen, Persona und erlaubte MCP-IDs. Passwort-Aenderungen laufen vorzugsweise ueber die eigenen Passwort-Formulare.</p>
+              </div>
+            </div>
+            <label>
+              passwd.json
+              <textarea id="users-json" rows="18"></textarea>
+            </label>
+            <button id="save-users" class="secondary">User speichern</button>
+          </section>
+        </div>
+      </section>
+
+      <section class="view-panel" data-view-panel="logs">
+        <div class="logs-grid">
+          <section class="panel panel-span-2">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Diagnostics</p>
+                <h2>Logs</h2>
+                <p class="muted">App- und Service-Logs getrennt, mit schneller Umschaltung und klar lesbarer Monospace-Ausgabe.</p>
+              </div>
+              <button id="refresh-logs" class="secondary">Logs laden</button>
+            </div>
+            <div class="toolbar">
+              <label>
+                Datei
+                <select id="log-file">
+                  <option value="service">service</option>
+                  <option value="app">app</option>
+                </select>
+              </label>
+              <label>
+                Zeilen
+                <select id="log-lines">
+                  <option value="80">80</option>
+                  <option value="160" selected>160</option>
+                  <option value="300">300</option>
+                </select>
+              </label>
+            </div>
+            <pre id="log-output" class="console log-console"></pre>
+          </section>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="/static/app.js"></script>
