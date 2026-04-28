@@ -13,3 +13,4 @@ passwd.json
 mcps.local.json
 personas/*.md
 !personas/.gitkeep
+!personas/default.md
