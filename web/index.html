@@ -299,6 +299,17 @@
               <input id="guide-description" type="text" placeholder="Externer MCP fuer Cluster oder Plattformbetrieb">
             </label>
             <label>
+              Protokoll
+              <select id="guide-protocol">
+                <option value="standard_v1">Standard MCP</option>
+                <option value="satellite_execute_v1">Satellite Execute</option>
+              </select>
+            </label>
+            <label>
+              Modul
+              <input id="guide-module" type="text" placeholder="netbox">
+            </label>
+            <label>
               Base URL
               <input id="guide-base-url" type="text" placeholder="http://127.0.0.1:8080">
             </label>
@@ -310,7 +321,7 @@
               Health Path
               <input id="guide-health-path" type="text" value="/health">
             </label>
-            <label>
+            <label class="guide-span-2">
               Timeout Sekunden
               <input id="guide-timeout-seconds" type="number" min="3" max="120" step="1" value="15">
             </label>

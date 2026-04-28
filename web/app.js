@@ -72,6 +72,8 @@ const el = {
   guideId: document.getElementById("guide-id"),
   guideName: document.getElementById("guide-name"),
   guideDescription: document.getElementById("guide-description"),
+  guideProtocol: document.getElementById("guide-protocol"),
+  guideModule: document.getElementById("guide-module"),
   guideBaseUrl: document.getElementById("guide-base-url"),
   guideExecutePath: document.getElementById("guide-execute-path"),
   guideHealthPath: document.getElementById("guide-health-path"),
@@ -216,6 +218,8 @@ function defaultMcpByKind(kind) {
     description: "Externer MCP via HTTP",
     kind: "remote_http",
     enabled: true,
+    protocol: "standard_v1",
+    module: "",
     base_url: "http://remote-host:8080",
     execute_path: "/execute",
     health_path: "/health",
@@ -248,6 +252,8 @@ function collectGuideDraft() {
     description: el.guideDescription.value.trim() || "Externer MCP via HTTP",
     kind: "remote_http",
     enabled: true,
+    protocol: el.guideProtocol.value.trim() || "standard_v1",
+    module: el.guideModule.value.trim().toLowerCase(),
     base_url: el.guideBaseUrl.value.trim(),
     execute_path: el.guideExecutePath.value.trim() || "/execute",
     health_path: el.guideHealthPath.value.trim() || "/health",
@@ -265,6 +271,8 @@ function syncGuideFromMcp(item) {
   el.guideId.value = item.id || "";
   el.guideName.value = item.name || "";
   el.guideDescription.value = item.description || "";
+  el.guideProtocol.value = item.protocol || "standard_v1";
+  el.guideModule.value = item.module || "";
   el.guideBaseUrl.value = item.base_url || "";
   el.guideExecutePath.value = item.execute_path || "/execute";
   el.guideHealthPath.value = item.health_path || "/health";
@@ -748,6 +756,15 @@ function renderMcpManager() {
           <label>Beschreibung<input type="text" data-field="description" value="${escapeHtml(item.description || "")}"></label>
           ${item.kind === "remote_http" ? `
             <div class="panel-grid">
+              <label>Protokoll
+                <select data-field="protocol">
+                  <option value="standard_v1" ${item.protocol === "satellite_execute_v1" ? "" : "selected"}>Standard MCP</option>
+                  <option value="satellite_execute_v1" ${item.protocol === "satellite_execute_v1" ? "selected" : ""}>Satellite Execute</option>
+                </select>
+              </label>
+              <label>Modul<input type="text" data-field="module" value="${escapeHtml(item.module || "")}"></label>
+            </div>
+            <div class="panel-grid">
               <label>Base URL<input type="text" data-field="base_url" value="${escapeHtml(item.base_url || "")}"></label>
               <label>Execute Path<input type="text" data-field="execute_path" value="${escapeHtml(item.execute_path || "/execute")}"></label>
             </div>
@@ -781,6 +798,8 @@ function collectMcpManagerConfig() {
       enabled: card.querySelector('[data-field="enabled"]').value.trim().toLowerCase() !== "false",
     };
     if (kind === "remote_http") {
+      item.protocol = card.querySelector('[data-field="protocol"]').value.trim() || "standard_v1";
+      item.module = card.querySelector('[data-field="module"]').value.trim().toLowerCase();
       item.base_url = card.querySelector('[data-field="base_url"]').value.trim();
       item.execute_path = card.querySelector('[data-field="execute_path"]').value.trim() || "/execute";
       item.health_path = card.querySelector('[data-field="health_path"]').value.trim() || "/health";

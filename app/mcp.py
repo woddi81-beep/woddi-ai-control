@@ -62,6 +62,8 @@ class RemoteHttpMCP(BaseMCP):
         label: str,
         description: str,
         base_url: str,
+        protocol: str = "standard_v1",
+        module: str = "",
         execute_path: str = "/execute",
         health_path: str = "/health",
         bearer_token: str = "",
@@ -70,6 +72,8 @@ class RemoteHttpMCP(BaseMCP):
     ) -> None:
         super().__init__(mcp_id, label, description)
         self.base_url = str(base_url).strip().rstrip("/")
+        self.protocol = (str(protocol or "standard_v1").strip().lower() or "standard_v1")
+        self.module = str(module or "").strip().lower()
         self.execute_path = str(execute_path or "/execute").strip() or "/execute"
         self.health_path = str(health_path or "/health").strip() or "/health"
         self.bearer_token = bearer_token.strip()
@@ -88,12 +92,22 @@ class RemoteHttpMCP(BaseMCP):
         base.update(
             {
                 "kind": "remote_http",
+                "protocol": self.protocol,
+                "module": self.module,
                 "base_url": self.base_url,
                 "execute_path": self.execute_path,
                 "health_path": self.health_path,
             }
         )
         return base
+
+    def _execute_request_body(self, action: str, payload: dict[str, Any]) -> dict[str, Any]:
+        normalized = action.strip().lower() or "health"
+        if self.protocol == "satellite_execute_v1":
+            module = self.module or self.mcp_id
+            inner_payload = {"action": normalized, **payload}
+            return {"module": module, "payload": inner_payload}
+        return {"action": normalized, "payload": payload}
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
@@ -116,6 +130,42 @@ class RemoteHttpMCP(BaseMCP):
     def handshake(self) -> MCPResult:
         if not self.base_url:
             return MCPResult(False, self.mcp_id, "handshake", "Remote MCP base_url fehlt.", {}, "missing_base_url")
+        if self.protocol == "satellite_execute_v1":
+            health_result = self.health()
+            if not health_result.success:
+                return MCPResult(
+                    False,
+                    self.mcp_id,
+                    "handshake",
+                    health_result.message,
+                    health_result.data,
+                    health_result.error,
+                )
+            capabilities = {
+                "protocol": self.protocol,
+                "module": self.module or self.mcp_id,
+                "actions": [
+                    "health",
+                    "devices",
+                    "ip-addresses",
+                    "get_objects",
+                    "get_object_by_id",
+                    "get_changelogs",
+                ],
+                "service": self.label,
+            }
+            return MCPResult(
+                True,
+                self.mcp_id,
+                "handshake",
+                "Satellite MCP Health erfolgreich; Capabilities lokal abgeleitet.",
+                {
+                    "base_url": self.base_url,
+                    "execute_url": f"{self.base_url}{self.execute_path}",
+                    "health_url": f"{self.base_url}{self.health_path}",
+                    "capabilities": capabilities,
+                },
+            )
         try:
             health_result = self.health()
             capabilities: dict[str, Any] = {}
@@ -171,7 +221,7 @@ class RemoteHttpMCP(BaseMCP):
             response = self._client.post(
                 f"{self.base_url}{self.execute_path}",
                 headers=self._headers(),
-                json={"action": normalized, "payload": payload},
+                json=self._execute_request_body(normalized, payload),
             )
             response.raise_for_status()
             raw = response.json() if response.content else {}
@@ -230,6 +280,8 @@ class MCPRegistry:
                 label=label,
                 description=description,
                 base_url=str(item.get("base_url", "")).strip(),
+                protocol=str(item.get("protocol", "standard_v1")).strip() or "standard_v1",
+                module=str(item.get("module", "")).strip(),
                 execute_path=str(item.get("execute_path", "/execute")).strip() or "/execute",
                 health_path=str(item.get("health_path", "/health")).strip() or "/health",
                 bearer_token=str(item.get("bearer_token", "")).strip(),

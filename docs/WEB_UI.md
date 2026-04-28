@@ -43,6 +43,7 @@ Die Dateien werden beim ersten Start aus den Vorlagen unter `config/` erzeugt, f
 - Files-Roots
 - MCP-Manager mit Formularen fuer `docs`, `files`, `netbox`, `remote_http`
 - MCP-Guide fuer neue `remote_http`-MCPs mit Validierung, Health-, Handshake- und Command-Checks
+- Standard-MCP- und Satellite-Execute-Protokolle fuer externe Dienste wie NetBox
 - Remote-MCP-Handshake
 - `passwd.json` als Root-Verwaltung
 - Persona-Editor fuer `personas/*.md`

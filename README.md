@@ -22,6 +22,7 @@ Die UI unter `http://127.0.0.1:8095/` bietet:
 - Betriebsdoku direkt im Browser
 - MCP-Manager fuer externe MCPs via HTTP
 - Gefuehrter MCP-Guide zum Hinzufuegen, Validieren und Testen neuer MCPs
+- Unterstuetzt Standard-MCP-HTTP und Satellite-Execute-Adapter, z. B. fuer NetBox-Satellites
 - Remote-MCP-Handshake
 - Pflege von `passwd.json` und `personas/*.md`
 - Runtime- und LLM-Verwaltung
