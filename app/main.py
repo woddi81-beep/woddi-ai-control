@@ -1183,6 +1183,13 @@ def _llm_models_url(base_url: str) -> str:
     return f"{normalized.rstrip('/')}/models"
 
 
+def _llm_probe_messages() -> list[dict[str, str]]:
+    return [
+        {"role": "system", "content": "Antworte nur mit pong."},
+        {"role": "user", "content": "ping"},
+    ]
+
+
 def _validate_zip_member(member_name: str) -> None:
     normalized = member_name.replace("\\", "/").strip()
     if not normalized:
@@ -1566,31 +1573,60 @@ def probe_llm(body: LlmProbeRequest, request: Request) -> dict[str, Any]:
         pool=10.0,
     )
     probe_url = _llm_models_url(base_url)
+    model_ids: list[str] = []
+    models_probe_ok = False
+    models_probe_error = ""
     try:
         with httpx.Client(timeout=timeout) as client:
             response = client.get(probe_url)
-        response.raise_for_status()
-        payload = response.json() if response.content else {}
-        items = payload.get("data", []) if isinstance(payload, dict) else []
-        model_ids = []
-        if isinstance(items, list):
-            for item in items[:12]:
-                if isinstance(item, dict) and isinstance(item.get("id"), str):
-                    model_ids.append(item["id"])
+            response.raise_for_status()
+            payload = response.json() if response.content else {}
+            items = payload.get("data", []) if isinstance(payload, dict) else []
+            if isinstance(items, list):
+                for item in items[:12]:
+                    if isinstance(item, dict) and isinstance(item.get("id"), str):
+                        model_ids.append(item["id"])
+            models_probe_ok = True
+    except Exception as exc:
+        models_probe_error = str(exc)
+
+    probe_client = LlmClient(
+        base_url=base_url,
+        model=current_settings.llm_model,
+        fallback_model="",
+        api_key=current_settings.llm_api_key,
+        timeout_seconds=timeout_seconds,
+        max_tokens=min(64, current_settings.llm_max_tokens),
+    )
+    try:
+        reply = probe_client.chat(_llm_probe_messages()).strip()
         result = {
             "success": True,
             "base_url": base_url,
             "probe_url": probe_url,
-            "status_code": response.status_code,
+            "chat_url": probe_client._request_url(probe_client.api_mode),
+            "status_code": 200,
+            "model": current_settings.llm_model,
+            "detected_api_mode": probe_client.api_mode,
+            "reply_preview": reply[:120],
             "models": model_ids,
             "models_count": len(model_ids),
+            "models_probe_ok": models_probe_ok,
+            "models_probe_error": models_probe_error,
             "duration_ms": round((time.perf_counter() - started_at) * 1000.0, 2),
         }
-        _record_metric("endpoint", "/api/admin/llm-probe", started_at, data={"status_code": response.status_code, "base_url": base_url})
+        _record_metric(
+            "endpoint",
+            "/api/admin/llm-probe",
+            started_at,
+            data={"status_code": 200, "base_url": base_url, "api_mode": probe_client.api_mode},
+        )
         return result
     except Exception as exc:
         _record_metric("endpoint", "/api/admin/llm-probe", started_at, ok=False, data={"base_url": base_url, "reason": str(exc)})
         raise HTTPException(status_code=400, detail=f"LLM Probe fehlgeschlagen: {exc}") from exc
+    finally:
+        probe_client.close()
 
 
 @app.get("/api/admin/mcps")
