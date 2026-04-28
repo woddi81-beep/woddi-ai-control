@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -22,6 +23,42 @@ UNIT_NAME = "woddi-ai-control.service"
 SYSTEMD_TEMPLATE = PROJECT_ROOT / "systemd/woddi-ai-control.service.tpl"
 LOCAL_PID = PROJECT_ROOT / "logs/woddi-ai-control.pid"
 LOCAL_STDOUT = PROJECT_ROOT / "logs/woddi-ai-control-service.log"
+
+
+def _os_release_summary() -> dict[str, str]:
+    os_release = Path("/etc/os-release")
+    if not os_release.exists():
+        return {"id": "", "id_like": "", "pretty_name": ""}
+    raw: dict[str, str] = {}
+    for line in os_release.read_text(encoding="utf-8", errors="replace").splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        raw[key.strip().lower()] = value.strip().strip('"').strip("'")
+    return {
+        "id": raw.get("id", "").strip().lower(),
+        "id_like": raw.get("id_like", "").strip().lower(),
+        "pretty_name": raw.get("pretty_name", "").strip(),
+    }
+
+
+def _platform_family() -> str:
+    summary = _os_release_summary()
+    distro_id = summary["id"]
+    distro_like = summary["id_like"]
+    if distro_id == "ubuntu" or "ubuntu" in distro_like:
+        return "ubuntu"
+    if distro_id in {"arch", "cachyos", "manjaro"} or "arch" in distro_like:
+        return "arch"
+    return "other"
+
+
+def _is_ubuntu() -> bool:
+    return _platform_family() == "ubuntu"
+
+
+def _is_arch_family() -> bool:
+    return _platform_family() == "arch"
 
 
 def _preferred_python_bin() -> str | None:
@@ -77,6 +114,40 @@ def _parse_env_text(text: str) -> dict[str, str]:
 
 def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
+    os_release = _os_release_summary()
+    platform_family = _platform_family()
+    pretty_name = os_release["pretty_name"] or "unbekannt"
+    checks.append(
+        _check_item(
+            "platform",
+            "pass" if platform_family in {"ubuntu", "arch"} else "warn",
+            f"Erkannt: {pretty_name} ({platform_family or 'other'})",
+            {
+                "pretty_name": pretty_name,
+                "family": platform_family,
+                "id": os_release["id"],
+                "id_like": os_release["id_like"],
+            },
+        )
+    )
+
+    package_manager = ""
+    package_hint = ""
+    if shutil.which("apt-get"):
+        package_manager = "apt-get"
+        package_hint = "sudo apt-get install -y python3 python3-venv python3-pip git curl"
+    elif shutil.which("pacman"):
+        package_manager = "pacman"
+        package_hint = "sudo pacman -S python python-pip git curl"
+    checks.append(
+        _check_item(
+            "package_manager",
+            "pass" if package_manager else "warn",
+            f"Paketmanager gefunden: {package_manager}" if package_manager else "Kein unterstuetzter Paketmanager automatisch erkannt.",
+            {"command": package_manager, "hint": package_hint},
+        )
+    )
+
     py_ok = sys.version_info >= (3, 10)
     checks.append(
         _check_item(
@@ -122,6 +193,20 @@ def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
             "systemctl gefunden." if shutil.which("systemctl") else "systemctl fehlt (relevant fuer --systemd).",
         )
     )
+    checks.append(
+        _check_item(
+            "command_git",
+            "pass" if shutil.which("git") else "warn",
+            "git gefunden." if shutil.which("git") else "git fehlt.",
+        )
+    )
+    checks.append(
+        _check_item(
+            "command_curl",
+            "pass" if shutil.which("curl") else "warn",
+            "curl gefunden." if shutil.which("curl") else "curl fehlt (nutzlich fuer Health/Debug).",
+        )
+    )
 
     if getattr(args, "systemd", "none") in {"user", "system"}:
         checks.append(
@@ -145,8 +230,6 @@ def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
         PROJECT_ROOT / "app/main.py",
         PROJECT_ROOT / "app/cli.py",
         PROJECT_ROOT / "config/runtime.json",
-        PROJECT_ROOT / "config/docs_sources.json",
-        PROJECT_ROOT / "config/files_sources.json",
         PROJECT_ROOT / "config/mcps.json",
         PROJECT_ROOT / "config/users.json",
         PROJECT_ROOT / "config/personas/default.md",
@@ -156,9 +239,10 @@ def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
         PROJECT_ROOT / "web/index.html",
     ]
     for path in required_files:
+        relative_name = path.relative_to(PROJECT_ROOT).as_posix().replace("/", "_")
         checks.append(
             _check_item(
-                f"file_{path.name}",
+                f"file_{relative_name}",
                 "pass" if path.exists() else "fail",
                 f"Datei {'vorhanden' if path.exists() else 'fehlt'}: {path}",
             )
@@ -187,6 +271,39 @@ def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
             )
         )
 
+    port = 8095
+    port_free = False
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            port_free = sock.connect_ex(("127.0.0.1", port)) != 0
+    except OSError:
+        port_free = False
+    checks.append(
+        _check_item(
+            "tcp_8095",
+            "pass" if port_free else "warn",
+            "Port 8095 ist frei." if port_free else "Port 8095 wirkt belegt. Runtime-Port pruefen oder Dienst stoppen.",
+            {"port": port},
+        )
+    )
+
+    try:
+        disk = shutil.disk_usage(PROJECT_ROOT)
+        free_gb = round(disk.free / (1024 ** 3), 2)
+        disk_ok = free_gb >= 1.0
+    except OSError:
+        free_gb = 0.0
+        disk_ok = False
+    checks.append(
+        _check_item(
+            "disk_free",
+            "pass" if disk_ok else "warn",
+            f"Freier Platz im Projektbereich: {free_gb} GiB",
+            {"free_gib": free_gb},
+        )
+    )
+
     runtime_json = PROJECT_ROOT / "config/runtime.json"
     try:
         parsed_runtime = json.loads(runtime_json.read_text(encoding="utf-8"))
@@ -201,26 +318,23 @@ def _build_prerequisite_report(args: argparse.Namespace) -> dict[str, Any]:
         )
     )
 
-    docs_sources_json = PROJECT_ROOT / "config/docs_sources.json"
-    try:
-        parsed_sources = json.loads(docs_sources_json.read_text(encoding="utf-8"))
-        sources_ok = isinstance(parsed_sources, dict) and isinstance(parsed_sources.get("sources"), list)
-    except Exception:
-        sources_ok = False
-    checks.append(
-        _check_item(
-            "docs_sources_json",
-            "pass" if sources_ok else "fail",
-            "docs_sources.json ist valide." if sources_ok else "docs_sources.json ist ungueltig.",
-        )
-    )
-
     summary = {
         "passed": sum(1 for item in checks if item["status"] == "pass"),
         "warnings": sum(1 for item in checks if item["status"] == "warn"),
         "failed": sum(1 for item in checks if item["status"] == "fail"),
     }
-    return {"checks": checks, "summary": summary}
+    setup_hint = "./scripts/ubuntu-first-setup.sh" if platform_family == "ubuntu" else "./scripts/arch-first-setup.sh" if platform_family == "arch" else ""
+    return {
+        "checks": checks,
+        "summary": summary,
+        "platform": {
+            "pretty_name": pretty_name,
+            "family": platform_family,
+            "package_manager": package_manager,
+            "package_hint": package_hint,
+            "setup_hint": setup_hint,
+        },
+    }
 
 
 def cmd_check_prerequisites(args: argparse.Namespace) -> int:
@@ -317,6 +431,10 @@ def _install_systemd_unit(systemd_mode: str, *, enable: bool, start: bool) -> in
 
 
 def cmd_install(args: argparse.Namespace) -> int:
+    if _is_ubuntu():
+        print("[install][info] Ubuntu erkannt. Empfohlener Pfad: ./scripts/ubuntu-first-setup.sh")
+    elif _is_arch_family():
+        print("[install][info] Arch/CachyOS erkannt. Empfohlener Pfad: ./scripts/arch-first-setup.sh")
     report = _build_prerequisite_report(args)
     _print_checks(report, "woddi-ai-control install: preflight")
     if report["summary"]["failed"] > 0 and not bool(args.force):
@@ -381,6 +499,7 @@ def cmd_install(args: argparse.Namespace) -> int:
     for directory in (
         PROJECT_ROOT / "logs",
         PROJECT_ROOT / "data/cache",
+        PROJECT_ROOT / "personas",
     ):
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -395,6 +514,10 @@ def cmd_install(args: argparse.Namespace) -> int:
     print("[install][info] Fertig.")
     print(f"[install][info] Tests: ./{APP_CMD} check-prerequisites")
     print(f"[install][info] Start: ./{APP_CMD} start")
+    if _is_ubuntu():
+        print("[install][info] Ubuntu-Wrapper: ./scripts/ubuntu-first-setup.sh")
+    elif _is_arch_family():
+        print("[install][info] Arch-Wrapper: ./scripts/arch-first-setup.sh")
     return 0
 
 

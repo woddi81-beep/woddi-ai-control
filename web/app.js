@@ -1,10 +1,22 @@
 const el = {
   loginGate: document.getElementById("login-gate"),
+  loginForm: document.getElementById("login-form"),
+  setupForm: document.getElementById("setup-form"),
   appShell: document.getElementById("app-shell"),
   loginUsername: document.getElementById("login-username"),
   loginPassword: document.getElementById("login-password"),
   loginSubmit: document.getElementById("login-submit"),
+  setupUsername: document.getElementById("setup-username"),
+  setupDisplayName: document.getElementById("setup-display-name"),
+  setupPassword: document.getElementById("setup-password"),
+  setupPasswordConfirm: document.getElementById("setup-password-confirm"),
+  setupSubmit: document.getElementById("setup-submit"),
   loginOutput: document.getElementById("login-output"),
+  changePasswordCurrent: document.getElementById("change-password-current"),
+  changePasswordNew: document.getElementById("change-password-new"),
+  changePasswordConfirm: document.getElementById("change-password-confirm"),
+  changePasswordSubmit: document.getElementById("change-password-submit"),
+  changePasswordOutput: document.getElementById("change-password-output"),
   viewerPill: document.getElementById("viewer-pill"),
   logoutButton: document.getElementById("logout-button"),
   releasePill: document.getElementById("release-pill"),
@@ -12,6 +24,7 @@ const el = {
   llmPill: document.getElementById("llm-pill"),
   viewButtons: [...document.querySelectorAll("[data-view-button]")],
   viewPanels: [...document.querySelectorAll("[data-view-panel]")],
+  roleSummary: document.getElementById("role-summary"),
   sessionId: document.getElementById("session-id"),
   mcpSelector: document.getElementById("mcp-selector"),
   showMcpContextInChat: document.getElementById("show-mcp-context-in-chat"),
@@ -23,25 +36,20 @@ const el = {
   mcpDebug: document.getElementById("mcp-debug"),
   refreshHealth: document.getElementById("refresh-health"),
   mcpCards: document.getElementById("mcp-cards"),
+  platformSummary: document.getElementById("platform-summary"),
+  platformChecks: document.getElementById("platform-checks"),
+  platformCommands: document.getElementById("platform-commands"),
   configSummary: document.getElementById("config-summary"),
-  netboxSummary: document.getElementById("netbox-summary"),
   pathsList: document.getElementById("paths-list"),
   performanceSummary: document.getElementById("performance-summary"),
   performanceBreakdown: document.getElementById("performance-breakdown"),
   performanceEndpoints: document.getElementById("performance-endpoints"),
   performanceRecent: document.getElementById("performance-recent"),
-  docsNav: document.getElementById("docs-nav"),
-  docsMeta: document.getElementById("docs-meta"),
-  docsContent: document.getElementById("docs-content"),
   mcpId: document.getElementById("mcp-id"),
   mcpAction: document.getElementById("mcp-action"),
   mcpPayload: document.getElementById("mcp-payload"),
   runMcp: document.getElementById("run-mcp"),
   mcpOutput: document.getElementById("mcp-output"),
-  netboxObjectType: document.getElementById("netbox-object-type"),
-  netboxQuery: document.getElementById("netbox-query"),
-  runNetbox: document.getElementById("run-netbox"),
-  netboxOutput: document.getElementById("netbox-output"),
   reloadRuntime: document.getElementById("reload-runtime"),
   restartApp: document.getElementById("restart-app"),
   shutdownApp: document.getElementById("shutdown-app"),
@@ -54,42 +62,42 @@ const el = {
   probeLlm: document.getElementById("probe-llm"),
   llmProbeOutput: document.getElementById("llm-probe-output"),
   saveLlmSettings: document.getElementById("save-llm-settings"),
-  netboxBaseUrl: document.getElementById("netbox-base-url"),
-  netboxTokenEnv: document.getElementById("netbox-token-env"),
-  netboxToken: document.getElementById("netbox-token"),
-  netboxTimeoutSeconds: document.getElementById("netbox-timeout-seconds"),
-  netboxCacheTtlSeconds: document.getElementById("netbox-cache-ttl-seconds"),
-  saveNetboxSettings: document.getElementById("save-netbox-settings"),
-  probeNetbox: document.getElementById("probe-netbox"),
-  netboxProbeOutput: document.getElementById("netbox-probe-output"),
-  netboxExplorerObjectType: document.getElementById("netbox-explorer-object-type"),
-  netboxExplorerQuery: document.getElementById("netbox-explorer-query"),
-  netboxExplorerSampleLimit: document.getElementById("netbox-explorer-sample-limit"),
-  exploreNetboxFields: document.getElementById("explore-netbox-fields"),
-  downloadNetboxBundle: document.getElementById("download-netbox-bundle"),
-  netboxExplorerOutput: document.getElementById("netbox-explorer-output"),
   runtimeJson: document.getElementById("runtime-json"),
   saveRuntime: document.getElementById("save-runtime"),
-  docsSourcesJson: document.getElementById("docs-sources-json"),
-  saveDocsSources: document.getElementById("save-docs-sources"),
-  docsSourcesManager: document.getElementById("docs-sources-manager"),
-  docsManagerNote: document.getElementById("docs-manager-note"),
-  saveDocsManager: document.getElementById("save-docs-manager"),
-  filesSourcesJson: document.getElementById("files-sources-json"),
-  saveFilesSources: document.getElementById("save-files-sources"),
-  filesSourcesManager: document.getElementById("files-sources-manager"),
-  filesManagerNote: document.getElementById("files-manager-note"),
-  saveFilesManager: document.getElementById("save-files-manager"),
   mcpManager: document.getElementById("mcp-manager"),
-  addMcpDocs: document.getElementById("add-mcp-docs"),
-  addMcpFiles: document.getElementById("add-mcp-files"),
-  addMcpNetbox: document.getElementById("add-mcp-netbox"),
   addMcpRemote: document.getElementById("add-mcp-remote"),
   saveMcpManager: document.getElementById("save-mcp-manager"),
   mcpsJson: document.getElementById("mcps-json"),
   saveMcps: document.getElementById("save-mcps"),
+  guideId: document.getElementById("guide-id"),
+  guideName: document.getElementById("guide-name"),
+  guideDescription: document.getElementById("guide-description"),
+  guideBaseUrl: document.getElementById("guide-base-url"),
+  guideExecutePath: document.getElementById("guide-execute-path"),
+  guideHealthPath: document.getElementById("guide-health-path"),
+  guideTimeoutSeconds: document.getElementById("guide-timeout-seconds"),
+  guideBearerTokenEnv: document.getElementById("guide-bearer-token-env"),
+  guideWorkingDir: document.getElementById("guide-working-dir"),
+  guideStartCommand: document.getElementById("guide-start-command"),
+  guideStatusCommand: document.getElementById("guide-status-command"),
+  guideStopCommand: document.getElementById("guide-stop-command"),
+  guideValidate: document.getElementById("guide-validate"),
+  guideHealth: document.getElementById("guide-health"),
+  guideHandshake: document.getElementById("guide-handshake"),
+  guideStatusCommandRun: document.getElementById("guide-run-status-command"),
+  guideStartCommandRun: document.getElementById("guide-start-command-run"),
+  guideStopCommandRun: document.getElementById("guide-stop-command-run"),
+  guideAdopt: document.getElementById("guide-adopt"),
+  guideChecks: document.getElementById("guide-checks"),
+  guideHints: document.getElementById("guide-hints"),
+  guideOutput: document.getElementById("guide-output"),
   usersJson: document.getElementById("users-json"),
   saveUsers: document.getElementById("save-users"),
+  passwordResetUsername: document.getElementById("password-reset-username"),
+  passwordResetNew: document.getElementById("password-reset-new"),
+  passwordResetConfirm: document.getElementById("password-reset-confirm"),
+  passwordResetSubmit: document.getElementById("password-reset-submit"),
+  passwordResetOutput: document.getElementById("password-reset-output"),
   personaId: document.getElementById("persona-id"),
   personaContent: document.getElementById("persona-content"),
   savePersona: document.getElementById("save-persona"),
@@ -104,8 +112,6 @@ const el = {
 const state = {
   config: null,
   health: null,
-  docsSourcesConfig: { sources: [] },
-  filesSourcesConfig: { sources: [] },
   performance: null,
   streamBuffer: "",
   activeView: "overview",
@@ -113,11 +119,11 @@ const state = {
   adminLoaded: false,
   adminLoading: null,
   session: null,
+  setupRequired: false,
   mcpsConfig: { mcps: [] },
   usersConfig: { groups: [], users: [] },
   personas: [],
-  docsCatalog: [],
-  activeDocId: "",
+  guideLastDraft: null,
 };
 
 const SHOW_MCP_CONTEXT_IN_CHAT_KEY = "mono.showMcpContextInChat";
@@ -158,92 +164,52 @@ function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function normalizeDocsSources(config) {
-  const safeConfig = config && typeof config === "object" ? config : {};
-  const sources = Array.isArray(safeConfig.sources) ? safeConfig.sources.filter((item) => item && typeof item === "object") : [];
-  return { ...safeConfig, sources };
-}
-
 function normalizeMcpsConfig(config) {
   const safeConfig = config && typeof config === "object" ? config : {};
-  const mcps = Array.isArray(safeConfig.mcps) ? safeConfig.mcps.filter((item) => item && typeof item === "object") : [];
+  const mcps = Array.isArray(safeConfig.mcps)
+    ? safeConfig.mcps
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const clone = deepClone(item);
+          delete clone.token_present;
+          delete clone.bearer_token_present;
+          return clone;
+        })
+    : [];
   return { ...safeConfig, mcps };
 }
 
 function normalizeUsersConfig(config) {
   const safeConfig = config && typeof config === "object" ? config : {};
   const groups = Array.isArray(safeConfig.groups) ? safeConfig.groups.filter((item) => item && typeof item === "object") : [];
-  const users = Array.isArray(safeConfig.users) ? safeConfig.users.filter((item) => item && typeof item === "object") : [];
-  return { ...safeConfig, groups, users };
+  const users = Array.isArray(safeConfig.users)
+    ? safeConfig.users
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const clone = deepClone(item);
+          delete clone.password;
+          delete clone.password_set;
+          delete clone.password_scheme;
+          delete clone.password_modern;
+          return clone;
+        })
+    : [];
+  return { groups, users };
+}
+
+function sanitizeRuntimeConfig(config) {
+  const safeConfig = deepClone(config && typeof config === "object" ? config : {});
+  if (safeConfig.llm && typeof safeConfig.llm === "object") {
+    delete safeConfig.llm.api_key_present;
+  }
+  return safeConfig;
 }
 
 function normalizePersonas(items) {
   return Array.isArray(items) ? items.filter((item) => item && typeof item === "object") : [];
 }
 
-function normalizeDocsCatalog(items) {
-  return Array.isArray(items) ? items.filter((item) => item && typeof item === "object") : [];
-}
-
-function renderDocsCatalog() {
-  const items = normalizeDocsCatalog(state.docsCatalog);
-  if (!items.length) {
-    el.docsNav.innerHTML = "";
-    el.docsMeta.innerHTML = "";
-    el.docsContent.textContent = "Keine Doku gefunden.";
-    return;
-  }
-  if (!items.some((item) => item.id === state.activeDocId)) {
-    state.activeDocId = items[0].id;
-  }
-  el.docsNav.innerHTML = items
-    .map(
-      (item) => `<button class="${item.id === state.activeDocId ? "" : "secondary"}" data-doc-id="${escapeHtml(item.id)}">${escapeHtml(item.title || item.id)}</button>`,
-    )
-    .join("");
-  const selected = items.find((item) => item.id === state.activeDocId) || items[0];
-  renderKvList(el.docsMeta, [
-    { label: "Titel", value: selected.title || selected.id || "-" },
-    { label: "Pfad", value: selected.path || "-" },
-  ]);
-  el.docsContent.textContent = selected.content || "";
-}
-
 function defaultMcpByKind(kind) {
-  if (kind === "docs") {
-    return {
-      id: `docs-${Date.now()}`,
-      name: "Neue Docs Quelle",
-      description: "Lokale Dokumentation",
-      kind: "docs",
-      enabled: true,
-      path: "/srv/http/example-docs",
-      patterns: ["README.md", "docs/**/*.md"],
-    };
-  }
-  if (kind === "files") {
-    return {
-      id: `files-${Date.now()}`,
-      name: "Neue Files Quelle",
-      description: "Dateibasiertes MCP",
-      kind: "files",
-      enabled: true,
-      roots: [{ id: "workspace", name: "Workspace", path: "/srv/http", patterns: ["**/*.md", "**/*.json", "**/*.py"] }],
-    };
-  }
-  if (kind === "netbox") {
-    return {
-      id: `netbox-${Date.now()}`,
-      name: "Neue NetBox Quelle",
-      description: "NetBox API",
-      kind: "netbox",
-      enabled: true,
-      base_url: "https://netbox.example.com/api",
-      token_env: "NETBOX_TOKEN",
-      cache_ttl_seconds: 45,
-      timeout_seconds: 12,
-    };
-  }
   return {
     id: `remote-${Date.now()}`,
     name: "Neuer Remote MCP",
@@ -255,7 +221,75 @@ function defaultMcpByKind(kind) {
     health_path: "/health",
     bearer_token_env: "REMOTE_MCP_TOKEN",
     timeout_seconds: 15,
+    working_dir: "",
+    start_command: [],
+    stop_command: [],
+    status_command: [],
   };
+}
+
+function parseCommandJson(value, fieldName) {
+  let parsed = [];
+  try {
+    parsed = JSON.parse(value || "[]");
+  } catch (error) {
+    throw new Error(`${fieldName} JSON ungueltig: ${error.message}`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${fieldName} muss ein JSON-Array sein.`);
+  }
+  return parsed;
+}
+
+function collectGuideDraft() {
+  return {
+    id: el.guideId.value.trim(),
+    name: el.guideName.value.trim() || el.guideId.value.trim() || "Neuer Remote MCP",
+    description: el.guideDescription.value.trim() || "Externer MCP via HTTP",
+    kind: "remote_http",
+    enabled: true,
+    base_url: el.guideBaseUrl.value.trim(),
+    execute_path: el.guideExecutePath.value.trim() || "/execute",
+    health_path: el.guideHealthPath.value.trim() || "/health",
+    bearer_token_env: el.guideBearerTokenEnv.value.trim(),
+    timeout_seconds: Number(el.guideTimeoutSeconds.value || 15) || 15,
+    working_dir: el.guideWorkingDir.value.trim(),
+    start_command: parseCommandJson(el.guideStartCommand.value, "Start Command"),
+    status_command: parseCommandJson(el.guideStatusCommand.value, "Status Command"),
+    stop_command: parseCommandJson(el.guideStopCommand.value, "Stop Command"),
+  };
+}
+
+function syncGuideFromMcp(item) {
+  if (!item || typeof item !== "object") return;
+  el.guideId.value = item.id || "";
+  el.guideName.value = item.name || "";
+  el.guideDescription.value = item.description || "";
+  el.guideBaseUrl.value = item.base_url || "";
+  el.guideExecutePath.value = item.execute_path || "/execute";
+  el.guideHealthPath.value = item.health_path || "/health";
+  el.guideTimeoutSeconds.value = item.timeout_seconds ?? 15;
+  el.guideBearerTokenEnv.value = item.bearer_token_env || "";
+  el.guideWorkingDir.value = item.working_dir || "";
+  el.guideStartCommand.value = JSON.stringify(item.start_command || [], null, 2);
+  el.guideStatusCommand.value = JSON.stringify(item.status_command || [], null, 2);
+  el.guideStopCommand.value = JSON.stringify(item.stop_command || [], null, 2);
+}
+
+function renderGuideMeta(target, rows = [], fallbackLabel = "Status", fallbackValue = "Keine Daten") {
+  renderKvList(target, rows.length ? rows : [{ label: fallbackLabel, value: fallbackValue }]);
+}
+
+function upsertGuideDraftIntoManager(draft) {
+  state.mcpsConfig = normalizeMcpsConfig(state.mcpsConfig);
+  const index = state.mcpsConfig.mcps.findIndex((item) => item.id === draft.id);
+  if (index >= 0) {
+    state.mcpsConfig.mcps[index] = deepClone(draft);
+  } else {
+    state.mcpsConfig.mcps.push(deepClone(draft));
+  }
+  el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
+  renderMcpManager();
 }
 
 function formatDate(value) {
@@ -281,7 +315,7 @@ function formatPercent(value) {
 }
 
 function parseRuntimeConfig() {
-  return JSON.parse(el.runtimeJson.value || "{}");
+  return sanitizeRuntimeConfig(JSON.parse(el.runtimeJson.value || "{}"));
 }
 
 function ensureRuntimeShape(config) {
@@ -289,8 +323,6 @@ function ensureRuntimeShape(config) {
   if (!safeConfig.app || typeof safeConfig.app !== "object") safeConfig.app = {};
   if (!safeConfig.llm || typeof safeConfig.llm !== "object") safeConfig.llm = {};
   if (!safeConfig.chat || typeof safeConfig.chat !== "object") safeConfig.chat = {};
-  if (!safeConfig.docs || typeof safeConfig.docs !== "object") safeConfig.docs = {};
-  if (!safeConfig.netbox || typeof safeConfig.netbox !== "object") safeConfig.netbox = {};
   return safeConfig;
 }
 
@@ -319,32 +351,10 @@ function applyLlmFormToRuntime(config) {
   return runtime;
 }
 
-function syncNetboxFormFromRuntime(config) {
-  const runtime = ensureRuntimeShape(deepClone(config || {}));
-  el.netboxBaseUrl.value = runtime.netbox.base_url || "";
-  el.netboxTokenEnv.value = runtime.netbox.token_env || "";
-  el.netboxToken.value = runtime.netbox.token || "";
-  el.netboxTimeoutSeconds.value = runtime.netbox.timeout_seconds ?? "";
-  el.netboxCacheTtlSeconds.value = runtime.netbox.cache_ttl_seconds ?? "";
-}
-
-function applyNetboxFormToRuntime(config) {
-  const runtime = ensureRuntimeShape(deepClone(config || {}));
-  runtime.netbox.base_url = el.netboxBaseUrl.value.trim();
-  runtime.netbox.token_env = el.netboxTokenEnv.value.trim();
-  runtime.netbox.token = el.netboxToken.value.trim();
-  const timeoutSeconds = Number(el.netboxTimeoutSeconds.value);
-  if (Number.isFinite(timeoutSeconds) && timeoutSeconds > 0) {
-    runtime.netbox.timeout_seconds = timeoutSeconds;
-  }
-  const cacheTtl = Number(el.netboxCacheTtlSeconds.value);
-  if (Number.isFinite(cacheTtl) && cacheTtl > 0) {
-    runtime.netbox.cache_ttl_seconds = Math.round(cacheTtl);
-  }
-  return runtime;
-}
-
 function setActiveView(view) {
+  if (!state.session?.is_admin && (view === "config" || view === "logs")) {
+    view = "overview";
+  }
   state.activeView = view;
   for (const button of el.viewButtons) {
     button.classList.toggle("active", button.dataset.viewButton === view);
@@ -369,7 +379,12 @@ function selectedMcpIds() {
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, options);
+  const method = String(options.method || "GET").toUpperCase();
+  const headers = new Headers(options.headers || {});
+  if ((method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE") && state.session?.csrf_token) {
+    headers.set("x-csrf-token", state.session.csrf_token);
+  }
+  const response = await fetch(url, { ...options, headers });
   const text = await response.text();
   let data = {};
   try {
@@ -381,6 +396,9 @@ async function fetchJson(url, options = {}) {
     if (response.status === 401) {
       showLogin("Anmeldung erforderlich.");
     }
+    if (response.status === 503 && data.detail === "setup_required") {
+      showSetup("Initiales Admin-Konto anlegen.");
+    }
     throw new Error(data.detail || data.message || response.statusText);
   }
   return data;
@@ -388,21 +406,44 @@ async function fetchJson(url, options = {}) {
 
 async function ensureSession() {
   const data = await fetchJson("/api/auth/session");
+  if (!data.authenticated) {
+    if (data.setup_required) {
+      showSetup("Initiales Admin-Konto anlegen.");
+      return data;
+    }
+    showLogin("Anmeldung erforderlich.");
+    return data;
+  }
   state.session = data;
+  state.setupRequired = false;
   el.loginGate.hidden = true;
   el.appShell.hidden = false;
   el.viewerPill.textContent = `User: ${data.display_name || data.username} (${data.role}, ${data.persona_id || "default"})`;
   for (const node of document.querySelectorAll(".admin-only")) {
     node.hidden = !data.is_admin;
   }
+  renderRoleSummary(data);
   renderMcpSelector(data.mcps || []);
   return data;
 }
 
 function showLogin(message = "") {
   state.session = null;
+  state.setupRequired = false;
   el.appShell.hidden = true;
   el.loginGate.hidden = false;
+  el.loginForm.hidden = false;
+  el.setupForm.hidden = true;
+  el.loginOutput.textContent = message;
+}
+
+function showSetup(message = "") {
+  state.session = null;
+  state.setupRequired = true;
+  el.appShell.hidden = true;
+  el.loginGate.hidden = false;
+  el.loginForm.hidden = true;
+  el.setupForm.hidden = false;
   el.loginOutput.textContent = message;
 }
 
@@ -412,12 +453,25 @@ function renderMcpSelector(mcps = []) {
       (item) => `<label><input type="checkbox" data-mcp-id="${escapeHtml(item.id)}" checked> ${escapeHtml(item.label || item.id)}</label>`,
     )
     .join("");
-  el.mcpSelector.innerHTML = `${toggleMarkup}<label><input id="show-mcp-context-in-chat" type="checkbox" ${el.showMcpContextInChat?.checked !== false ? "checked" : ""}> MCP Kontext im Chat</label>`;
+  const emptyHint = mcps.length
+    ? ""
+    : `<span class="scope-hint">Diesem Benutzer sind aktuell keine MCPs zugewiesen.</span>`;
+  el.mcpSelector.innerHTML = `${toggleMarkup}${emptyHint}<label><input id="show-mcp-context-in-chat" type="checkbox" ${el.showMcpContextInChat?.checked !== false ? "checked" : ""}> MCP Kontext im Chat</label>`;
   el.showMcpContextInChat = document.getElementById("show-mcp-context-in-chat");
   el.showMcpContextInChat.addEventListener("change", () => {
     persistUiPreferences();
   });
   loadUiPreferences();
+}
+
+function renderRoleSummary(session) {
+  if (!el.roleSummary) return;
+  const allowedCount = Array.isArray(session?.mcps) ? session.mcps.length : 0;
+  const label = session?.is_admin
+    ? `Admin-Modus aktiv. Volle Konfiguration, Logs und MCP-Steuerung sind freigeschaltet. Sichtbare MCPs: ${allowedCount}.`
+    : `User-Modus aktiv. Sichtbar sind nur freigegebene MCPs, keine Admin-Konfiguration. Freigegebene MCPs: ${allowedCount}.`;
+  el.roleSummary.hidden = false;
+  el.roleSummary.innerHTML = `<strong>${escapeHtml(label)}</strong>`;
 }
 
 function renderCitations(items = []) {
@@ -512,31 +566,73 @@ function renderConfigSummary(data) {
     )
     .join("");
 
-  renderKvList(el.netboxSummary, [
-    { label: "Base URL", value: data.netbox?.base_url || "-" },
-    { label: "Auth", value: data.netbox?.auth_mode || "anonymous" },
-    { label: "Token", value: data.netbox?.token_present ? "vorhanden" : "nicht gesetzt" },
-    { label: "Probe", value: data.netbox?.status_probe_url || "-" },
-  ]);
-
   renderKvList(el.pathsList, [
     { label: "runtime.json", value: data.paths?.runtime_config || "-" },
     { label: "mcps.local.json", value: data.paths?.mcps_config || "-" },
     { label: "passwd.json", value: data.paths?.passwd || "-" },
     { label: "personas/", value: data.paths?.personas_dir || "-" },
-    { label: "docs cache", value: data.paths?.docs_cache_dir || "-" },
     { label: "aktive Persona", value: data.viewer?.persona_id || "-" },
     { label: "Fallback Prompt", value: data.paths?.system_prompt || "-" },
-    { label: "Pfad ausserhalb Projekt", value: data.docs?.allow_outside_project ? "erlaubt" : "blockiert" },
     { label: "Service Log", value: data.paths?.service_log_file || "-" },
   ]);
+}
+
+function platformQuickstart(platform = {}) {
+  const family = platform.family || "other";
+  if (family === "ubuntu") {
+    return [
+      "cd /srv/http/woddi-ai-control",
+      "./check",
+      "./scripts/ubuntu-first-setup.sh",
+      "./woddi-ai-control service status",
+    ].join("\n");
+  }
+  if (family === "arch") {
+    return [
+      "cd /srv/http/woddi-ai-control",
+      "./check",
+      "./scripts/arch-first-setup.sh",
+      "./woddi-ai-control service status",
+    ].join("\n");
+  }
+  return [
+    "cd /srv/http/woddi-ai-control",
+    "./check",
+    "python -m venv .venv",
+    "./woddi-ai-control start",
+  ].join("\n");
+}
+
+function renderPlatformSummary(platform = {}) {
+  if (!el.platformSummary || !el.platformChecks || !el.platformCommands) return;
+  const cards = [
+    { label: "Distribution", value: platform.pretty_name || "-" },
+    { label: "Family", value: platform.family || "-" },
+    { label: "Paketmanager", value: platform.package_manager || "-" },
+    { label: "Python", value: platform.python || "-" },
+  ];
+  el.platformSummary.innerHTML = cards
+    .map(
+      (item) => `
+        <article class="summary-card">
+          <strong>${escapeHtml(item.label)}</strong>
+          <span>${escapeHtml(item.value)}</span>
+        </article>
+      `,
+    )
+    .join("");
+  renderKvList(el.platformChecks, [
+    { label: "check", value: platform.has_check_script ? "./check vorhanden" : "./check fehlt" },
+    { label: "Setup", value: platform.setup_hint || "-" },
+    { label: "systemctl", value: platform.has_systemctl ? "vorhanden" : "fehlt" },
+    { label: "git / curl", value: `${platform.has_git ? "git ok" : "git fehlt"} / ${platform.has_curl ? "curl ok" : "curl fehlt"}` },
+  ]);
+  el.platformCommands.textContent = platformQuickstart(platform);
 }
 
 function renderPerformance(data) {
   state.performance = data;
   const chat = data?.chat || {};
-  const docs = data?.docs || {};
-  const netbox = data?.netbox || {};
   const topEndpoint = data?.top_endpoint || null;
   const endpointRows = Array.isArray(data?.endpoints) ? data.endpoints.slice(0, 4) : [];
   const recentRows = Array.isArray(data?.recent) ? data.recent : [];
@@ -559,13 +655,11 @@ function renderPerformance(data) {
     .join("");
 
   renderKvList(el.performanceBreakdown, [
-    { label: "Docs Suche", value: String(docs.searches || 0) },
-    { label: "Docs Cache", value: formatPercent(docs.cache_hit_rate) },
-    { label: "Index Memory Hit", value: formatPercent(docs.index_memory_hit_rate) },
-    { label: "NetBox Cache", value: formatPercent(netbox.cache_hit_rate) },
-    { label: "Files Cache", value: formatPercent(chat.files_cache_hit_rate) },
-    { label: "Avg Docs Zeit", value: formatMs(chat.avg_docs_ms) },
+    { label: "MCP Kontext", value: formatMs(chat.avg_context_ms) },
+    { label: "MCP Calls", value: String(chat.mcp_calls || 0) },
+    { label: "MCP Fehler", value: String(chat.mcp_errors || 0) },
     { label: "Avg LLM Zeit", value: formatMs(chat.avg_llm_ms) },
+    { label: "Avg Gesamt", value: formatMs(chat.avg_total_ms) },
   ]);
 
   renderKvList(
@@ -601,195 +695,6 @@ function renderPerformance(data) {
   }
 }
 
-function docsHealthById(sourceId) {
-  const items = Array.isArray(state.health?.mcps) ? state.health.mcps : [];
-  return items.find((item) => (item.mcp_id || item.id) === sourceId) || null;
-}
-
-function syncDocsSourcesEditor(config) {
-  el.docsSourcesJson.value = JSON.stringify(config, null, 2);
-}
-
-function renderDocsManager() {
-  const config = normalizeDocsSources(state.docsSourcesConfig);
-  const allowOutside = !!state.config?.docs?.allow_outside_project;
-  el.docsManagerNote.textContent = allowOutside
-    ? "Absolute Pfade sind aktuell erlaubt. Fuer externe Doku-Pfade wie /opt/... kann direkt gespeichert und importiert werden."
-    : "Absolute Pfade ausserhalb des Projekts sind aktuell blockiert. Fuer /opt/... muss docs.allow_outside_project in der Runtime auf true stehen.";
-
-  el.docsSourcesManager.innerHTML = config.sources
-    .map((source) => {
-      const health = docsHealthById(source.id);
-      const statusClass = health?.success ? "ok" : "error";
-      const statusLabel = health ? (health.success ? "bereit" : "fehlt") : "unbekannt";
-      const indexLabel = health?.data?.index_exists
-        ? (health.data?.index_matches_sources ? "aktuell" : "vorhanden, stale")
-        : "kein Index";
-      return `
-        <article class="docs-card" data-source-id="${escapeHtml(source.id)}">
-          <div class="docs-card-head">
-            <div>
-              <h3>${escapeHtml(source.name || source.id)}</h3>
-              <p class="muted">${escapeHtml(source.id)}</p>
-            </div>
-            <span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
-          </div>
-
-          <label>
-            Lokaler Pfad
-            <input type="text" data-docs-path="${escapeHtml(source.id)}" value="${escapeHtml(source.path || "")}">
-          </label>
-
-          <div class="docs-stats">
-            <div class="docs-stat">
-              <strong>Dateien</strong>
-              <span>${escapeHtml(health?.data?.document_count ?? "-")}</span>
-            </div>
-            <div class="docs-stat">
-              <strong>Index</strong>
-              <span>${escapeHtml(indexLabel)}</span>
-            </div>
-            <div class="docs-stat">
-              <strong>Index gebaut</strong>
-              <span>${escapeHtml(formatDate(health?.data?.index_generated_at))}</span>
-            </div>
-            <div class="docs-stat">
-              <strong>Quelle</strong>
-              <span>${escapeHtml(health?.data?.source_path || source.path || "-")}</span>
-            </div>
-          </div>
-
-          <div class="upload-row">
-            <label>
-              ZIP Upload
-              <input type="file" data-docs-upload="${escapeHtml(source.id)}" accept=".zip,application/zip">
-            </label>
-            <div class="button-row">
-              <button type="button" class="secondary" data-docs-action="upload" data-source-id="${escapeHtml(source.id)}">ZIP importieren</button>
-              <button type="button" class="secondary" data-docs-action="reindex" data-source-id="${escapeHtml(source.id)}">Reindex</button>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function docsManagerConfig() {
-  const config = normalizeDocsSources(state.docsSourcesConfig);
-  const next = deepClone(config);
-  for (const source of next.sources) {
-    const input = el.docsSourcesManager.querySelector(`[data-docs-path="${source.id}"]`);
-    if (input) {
-      source.path = input.value.trim();
-    }
-  }
-  return next;
-}
-
-function docsConfigFingerprint(config) {
-  const sources = normalizeDocsSources(config).sources.map((item) => ({
-    id: item.id || "",
-    name: item.name || "",
-    path: item.path || "",
-    patterns: Array.isArray(item.patterns) ? item.patterns : [],
-  }));
-  return JSON.stringify(sources);
-}
-
-function normalizeFilesSources(config) {
-  const safeConfig = config && typeof config === "object" ? config : {};
-  const sources = Array.isArray(safeConfig.sources) ? safeConfig.sources.filter((item) => item && typeof item === "object") : [];
-  return { ...safeConfig, sources };
-}
-
-function syncFilesSourcesEditor(config) {
-  el.filesSourcesJson.value = JSON.stringify(config, null, 2);
-}
-
-function filesHealth() {
-  const items = Array.isArray(state.health?.mcps) ? state.health.mcps : [];
-  return items.find((item) => (item.mcp_id || item.id) === "files") || null;
-}
-
-function renderFilesManager() {
-  const config = normalizeFilesSources(state.filesSourcesConfig);
-  const allowOutside = !!state.config?.files?.allow_outside_project;
-  const health = filesHealth();
-  const healthRoots = Array.isArray(health?.data?.roots) ? health.data.roots : [];
-  const healthById = Object.fromEntries(healthRoots.map((item) => [item.id, item]));
-  el.filesManagerNote.textContent = allowOutside
-    ? "Absolute File-Roots sind erlaubt. Damit koennen auch externe MCP- oder Repo-Pfade eingebunden werden."
-    : "File-Roots ausserhalb des Projekts sind aktuell blockiert.";
-
-  el.filesSourcesManager.innerHTML = config.sources
-    .map((source) => {
-      const sourceHealth = healthById[source.id] || null;
-      const statusClass = sourceHealth?.exists ? "ok" : "error";
-      const statusLabel = sourceHealth?.exists ? "bereit" : "fehlt";
-      const patterns = Array.isArray(source.patterns) ? source.patterns.join(", ") : "";
-      return `
-        <article class="docs-card" data-root-id="${escapeHtml(source.id)}">
-          <div class="docs-card-head">
-            <div>
-              <h3>${escapeHtml(source.name || source.id)}</h3>
-              <p class="muted">${escapeHtml(source.id)}</p>
-            </div>
-            <span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
-          </div>
-          <label>
-            Lokaler Pfad
-            <input type="text" data-files-path="${escapeHtml(source.id)}" value="${escapeHtml(source.path || "")}">
-          </label>
-          <label>
-            Patterns
-            <input type="text" data-files-patterns="${escapeHtml(source.id)}" value="${escapeHtml(patterns)}">
-          </label>
-          <div class="docs-stats">
-            <div class="docs-stat">
-              <strong>Dateien</strong>
-              <span>${escapeHtml(sourceHealth?.file_count ?? "-")}</span>
-            </div>
-            <div class="docs-stat">
-              <strong>Pfad</strong>
-              <span>${escapeHtml(sourceHealth?.path || source.path || "-")}</span>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function filesManagerConfig() {
-  const config = normalizeFilesSources(state.filesSourcesConfig);
-  const next = deepClone(config);
-  for (const source of next.sources) {
-    const pathInput = el.filesSourcesManager.querySelector(`[data-files-path="${source.id}"]`);
-    const patternsInput = el.filesSourcesManager.querySelector(`[data-files-patterns="${source.id}"]`);
-    if (pathInput) {
-      source.path = pathInput.value.trim();
-    }
-    if (patternsInput) {
-      source.patterns = patternsInput.value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-    }
-  }
-  return next;
-}
-
-function filesConfigFingerprint(config) {
-  const sources = normalizeFilesSources(config).sources.map((item) => ({
-    id: item.id || "",
-    name: item.name || "",
-    path: item.path || "",
-    patterns: Array.isArray(item.patterns) ? item.patterns : [],
-  }));
-  return JSON.stringify(sources);
-}
-
 function syncPersonaEditor() {
   const personas = normalizePersonas(state.personas);
   el.personaId.innerHTML = personas.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name || item.id)}</option>`).join("");
@@ -801,12 +706,21 @@ function syncPersonaEditor() {
   el.personaContent.value = selected?.content || "";
 }
 
+function syncPasswordResetUsers() {
+  const users = Array.isArray(state.usersConfig?.users) ? state.usersConfig.users : [];
+  if (!el.passwordResetUsername) return;
+  el.passwordResetUsername.innerHTML = users
+    .map((item) => `<option value="${escapeHtml(item.username)}">${escapeHtml(item.display_name || item.username)}</option>`)
+    .join("");
+  if (!users.some((item) => item.username === el.passwordResetUsername.value)) {
+    el.passwordResetUsername.value = users[0]?.username || "";
+  }
+}
+
 function renderMcpManager() {
   const config = normalizeMcpsConfig(state.mcpsConfig);
   el.mcpManager.innerHTML = config.mcps
     .map((item, index) => {
-      const roots = Array.isArray(item.roots) ? JSON.stringify(item.roots, null, 2) : "[]";
-      const patterns = Array.isArray(item.patterns) ? item.patterns.join(", ") : "";
       return `
         <article class="docs-card mcp-manager-grid" data-mcp-index="${index}">
           <div class="docs-card-head">
@@ -815,7 +729,11 @@ function renderMcpManager() {
               <p class="muted">${escapeHtml(item.kind || "unknown")} / ${escapeHtml(item.id || "-")}</p>
             </div>
             <div class="button-row">
+              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="status" data-mcp-id="${escapeHtml(item.id || "")}">Status</button>` : ""}
+              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="start" data-mcp-id="${escapeHtml(item.id || "")}">Start</button>` : ""}
+              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="stop" data-mcp-id="${escapeHtml(item.id || "")}">Stop</button>` : ""}
               ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="handshake" data-mcp-id="${escapeHtml(item.id || "")}">Handshake</button>` : ""}
+              ${item.kind === "remote_http" ? `<button type="button" class="secondary" data-mcp-action="guide" data-mcp-index="${index}">In Guide laden</button>` : ""}
               <button type="button" class="secondary" data-mcp-action="remove" data-mcp-index="${index}">Entfernen</button>
             </div>
           </div>
@@ -828,23 +746,6 @@ function renderMcpManager() {
             <label>Aktiv<input type="text" data-field="enabled" value="${item.enabled === false ? "false" : "true"}"></label>
           </div>
           <label>Beschreibung<input type="text" data-field="description" value="${escapeHtml(item.description || "")}"></label>
-          ${item.kind === "docs" ? `
-            <label>Pfad<input type="text" data-field="path" value="${escapeHtml(item.path || "")}"></label>
-            <label>Patterns<input type="text" data-field="patterns" value="${escapeHtml(patterns)}"></label>
-          ` : ""}
-          ${item.kind === "files" ? `
-            <label>Roots JSON<textarea data-field="roots" rows="8">${escapeHtml(roots)}</textarea></label>
-          ` : ""}
-          ${item.kind === "netbox" ? `
-            <div class="panel-grid">
-              <label>Base URL<input type="text" data-field="base_url" value="${escapeHtml(item.base_url || "")}"></label>
-              <label>Token Env<input type="text" data-field="token_env" value="${escapeHtml(item.token_env || "")}"></label>
-            </div>
-            <div class="panel-grid">
-              <label>Timeout<input type="text" data-field="timeout_seconds" value="${escapeHtml(item.timeout_seconds ?? "")}"></label>
-              <label>Cache TTL<input type="text" data-field="cache_ttl_seconds" value="${escapeHtml(item.cache_ttl_seconds ?? "")}"></label>
-            </div>
-          ` : ""}
           ${item.kind === "remote_http" ? `
             <div class="panel-grid">
               <label>Base URL<input type="text" data-field="base_url" value="${escapeHtml(item.base_url || "")}"></label>
@@ -854,7 +755,13 @@ function renderMcpManager() {
               <label>Health Path<input type="text" data-field="health_path" value="${escapeHtml(item.health_path || "/health")}"></label>
               <label>Bearer Token Env<input type="text" data-field="bearer_token_env" value="${escapeHtml(item.bearer_token_env || "")}"></label>
             </div>
-            <label>Timeout<input type="text" data-field="timeout_seconds" value="${escapeHtml(item.timeout_seconds ?? "")}"></label>
+            <div class="panel-grid">
+              <label>Timeout<input type="text" data-field="timeout_seconds" value="${escapeHtml(item.timeout_seconds ?? "")}"></label>
+              <label>Working Dir<input type="text" data-field="working_dir" value="${escapeHtml(item.working_dir || "")}"></label>
+            </div>
+            <label>Start Command JSON<textarea data-field="start_command" rows="3">${escapeHtml(JSON.stringify(item.start_command || [], null, 2))}</textarea></label>
+            <label>Stop Command JSON<textarea data-field="stop_command" rows="3">${escapeHtml(JSON.stringify(item.stop_command || [], null, 2))}</textarea></label>
+            <label>Status Command JSON<textarea data-field="status_command" rows="3">${escapeHtml(JSON.stringify(item.status_command || [], null, 2))}</textarea></label>
           ` : ""}
         </article>
       `;
@@ -873,22 +780,16 @@ function collectMcpManagerConfig() {
       kind,
       enabled: card.querySelector('[data-field="enabled"]').value.trim().toLowerCase() !== "false",
     };
-    if (kind === "docs") {
-      item.path = card.querySelector('[data-field="path"]').value.trim();
-      item.patterns = card.querySelector('[data-field="patterns"]').value.split(",").map((value) => value.trim()).filter(Boolean);
-    } else if (kind === "files") {
-      item.roots = JSON.parse(card.querySelector('[data-field="roots"]').value || "[]");
-    } else if (kind === "netbox") {
-      item.base_url = card.querySelector('[data-field="base_url"]').value.trim();
-      item.token_env = card.querySelector('[data-field="token_env"]').value.trim();
-      item.timeout_seconds = Number(card.querySelector('[data-field="timeout_seconds"]').value || 0) || 12;
-      item.cache_ttl_seconds = Number(card.querySelector('[data-field="cache_ttl_seconds"]').value || 0) || 45;
-    } else if (kind === "remote_http") {
+    if (kind === "remote_http") {
       item.base_url = card.querySelector('[data-field="base_url"]').value.trim();
       item.execute_path = card.querySelector('[data-field="execute_path"]').value.trim() || "/execute";
       item.health_path = card.querySelector('[data-field="health_path"]').value.trim() || "/health";
       item.bearer_token_env = card.querySelector('[data-field="bearer_token_env"]').value.trim();
       item.timeout_seconds = Number(card.querySelector('[data-field="timeout_seconds"]').value || 0) || 15;
+      item.working_dir = card.querySelector('[data-field="working_dir"]').value.trim();
+      item.start_command = JSON.parse(card.querySelector('[data-field="start_command"]').value || "[]");
+      item.stop_command = JSON.parse(card.querySelector('[data-field="stop_command"]').value || "[]");
+      item.status_command = JSON.parse(card.querySelector('[data-field="status_command"]').value || "[]");
     }
     return item;
   });
@@ -911,18 +812,11 @@ async function loadConfig() {
     el.mcpId.appendChild(option);
   }
   renderConfigSummary(data);
+  renderPlatformSummary(data.platform || {});
   if (state.session?.is_admin && state.adminLoaded) {
-    renderDocsManager();
-    renderFilesManager();
     renderMcpManager();
     syncPersonaEditor();
   }
-}
-
-async function loadDocsCatalog() {
-  const data = await fetchJson("/api/docs");
-  state.docsCatalog = normalizeDocsCatalog(data.items || []);
-  renderDocsCatalog();
 }
 
 async function loadAdminEditors(force = false) {
@@ -934,32 +828,25 @@ async function loadAdminEditors(force = false) {
     return state.adminLoading;
   }
   const loader = (async () => {
-    const [runtime, docsSources, filesSources, mcpsConfig, usersConfig, systemPrompt, personas] = await Promise.all([
+    const [runtime, mcpsConfig, usersConfig, systemPrompt, personas] = await Promise.all([
       fetchJson("/api/admin/runtime"),
-      fetchJson("/api/admin/docs-sources"),
-      fetchJson("/api/admin/files-sources"),
       fetchJson("/api/admin/mcps"),
       fetchJson("/api/admin/users"),
       fetchJson("/api/admin/system-prompt"),
       fetchJson("/api/admin/personas"),
     ]);
-    state.docsSourcesConfig = normalizeDocsSources(docsSources.config || { sources: [] });
-    state.filesSourcesConfig = normalizeFilesSources(filesSources.config || { sources: [] });
     state.mcpsConfig = normalizeMcpsConfig(mcpsConfig.config || { mcps: [] });
     state.usersConfig = normalizeUsersConfig(usersConfig.config || { groups: [], users: [] });
     state.personas = normalizePersonas(personas.items || []);
-    el.runtimeJson.value = JSON.stringify(runtime.config || {}, null, 2);
-    syncLlmFormFromRuntime(runtime.config || {});
-    syncNetboxFormFromRuntime(runtime.config || {});
-    syncDocsSourcesEditor(state.docsSourcesConfig);
-    syncFilesSourcesEditor(state.filesSourcesConfig);
+    const runtimeConfig = sanitizeRuntimeConfig(runtime.config || {});
+    el.runtimeJson.value = JSON.stringify(runtimeConfig, null, 2);
+    syncLlmFormFromRuntime(runtimeConfig);
     el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
     el.usersJson.value = JSON.stringify(state.usersConfig, null, 2);
     el.systemPrompt.value = systemPrompt.prompt || "";
-    renderDocsManager();
-    renderFilesManager();
     renderMcpManager();
     syncPersonaEditor();
+    syncPasswordResetUsers();
     state.adminLoaded = true;
   })();
   state.adminLoading = loader;
@@ -1001,10 +888,6 @@ async function refreshHealth() {
   const allowedIds = new Set((state.session?.mcps || []).map((item) => item.id));
   const visible = data.mcps.filter((item) => allowedIds.size === 0 || allowedIds.has(item.mcp_id || item.id));
   el.mcpCards.innerHTML = visible.map(cardMarkup).join("");
-  if (state.session?.is_admin && state.adminLoaded) {
-    renderDocsManager();
-    renderFilesManager();
-  }
 }
 
 async function loadPerformance() {
@@ -1048,80 +931,6 @@ async function refreshAppState({ reloadAdmin = false } = {}) {
   state.logsLoaded = false;
 }
 
-async function persistDocsSourcesConfig(config, { reloadAdmin = true, silent = false } = {}) {
-  const safeConfig = normalizeDocsSources(config);
-  const data = await fetchJson("/api/admin/docs-sources", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sources: safeConfig.sources }),
-  });
-  state.docsSourcesConfig = safeConfig;
-  syncDocsSourcesEditor(safeConfig);
-  if (!silent) {
-    el.controlOutput.textContent = JSON.stringify(data, null, 2);
-  }
-  await refreshAppState({ reloadAdmin });
-  return data;
-}
-
-async function persistFilesSourcesConfig(config, { reloadAdmin = true, silent = false } = {}) {
-  const safeConfig = normalizeFilesSources(config);
-  const data = await fetchJson("/api/admin/files-sources", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sources: safeConfig.sources }),
-  });
-  state.filesSourcesConfig = safeConfig;
-  syncFilesSourcesEditor(safeConfig);
-  if (!silent) {
-    el.controlOutput.textContent = JSON.stringify(data, null, 2);
-  }
-  await refreshAppState({ reloadAdmin });
-  return data;
-}
-
-async function saveDocsManager({ silent = false } = {}) {
-  const nextConfig = docsManagerConfig();
-  if (docsConfigFingerprint(nextConfig) === docsConfigFingerprint(state.docsSourcesConfig)) {
-    syncDocsSourcesEditor(nextConfig);
-    if (!silent) {
-      el.controlOutput.textContent = JSON.stringify({ success: true, message: "Docs-Pfade unveraendert." }, null, 2);
-    }
-    return;
-  }
-  await persistDocsSourcesConfig(nextConfig, { reloadAdmin: true, silent });
-}
-
-async function saveFilesManager({ silent = false } = {}) {
-  const nextConfig = filesManagerConfig();
-  if (filesConfigFingerprint(nextConfig) === filesConfigFingerprint(state.filesSourcesConfig)) {
-    syncFilesSourcesEditor(nextConfig);
-    if (!silent) {
-      el.controlOutput.textContent = JSON.stringify({ success: true, message: "File-Roots unveraendert." }, null, 2);
-    }
-    return;
-  }
-  await persistFilesSourcesConfig(nextConfig, { reloadAdmin: true, silent });
-}
-
-async function uploadDocsArchive(sourceId) {
-  const fileInput = el.docsSourcesManager.querySelector(`[data-docs-upload="${sourceId}"]`);
-  if (!fileInput?.files?.length) {
-    throw new Error("Bitte zuerst eine ZIP-Datei auswaehlen.");
-  }
-  await saveDocsManager({ silent: true });
-  const formData = new FormData();
-  formData.append("archive", fileInput.files[0]);
-  formData.append("reindex", "true");
-  const data = await fetchJson(`/api/admin/docs-sources/${sourceId}/upload`, {
-    method: "POST",
-    body: formData,
-  });
-  fileInput.value = "";
-  el.controlOutput.textContent = JSON.stringify(data, null, 2);
-  await refreshAppState({ reloadAdmin: true });
-}
-
 async function submitDirectMcp() {
   let payload = {};
   try {
@@ -1137,29 +946,6 @@ async function submitDirectMcp() {
     await loadPerformance();
   } catch (error) {
     el.mcpOutput.textContent = String(error.message || error);
-    setActiveView("tools");
-  }
-}
-
-async function runNetboxQuickQuery() {
-  const target = (state.session?.mcps || []).find((item) => item.kind === "netbox");
-  if (!target) {
-    el.netboxOutput.textContent = "Kein erlaubtes NetBox-MCP fuer diesen User.";
-    return;
-  }
-  try {
-    const data = await runMcp(target.id, "get_objects", {
-      object_type: el.netboxObjectType.value,
-      filters: {
-        q: el.netboxQuery.value,
-        limit: 10,
-      },
-    });
-    el.netboxOutput.textContent = JSON.stringify(data, null, 2);
-    setActiveView("tools");
-    await loadPerformance();
-  } catch (error) {
-    el.netboxOutput.textContent = String(error.message || error);
     setActiveView("tools");
   }
 }
@@ -1208,114 +994,6 @@ async function probeLlm() {
   el.llmProbeOutput.textContent = JSON.stringify(data, null, 2);
 }
 
-async function saveNetboxSettings() {
-  let config = {};
-  try {
-    config = parseRuntimeConfig();
-  } catch (error) {
-    el.controlOutput.textContent = `Runtime JSON ungueltig: ${error.message}`;
-    return;
-  }
-  const nextConfig = applyNetboxFormToRuntime(config);
-  el.runtimeJson.value = JSON.stringify(nextConfig, null, 2);
-  await saveRuntimeConfig();
-}
-
-async function probeNetboxConfig() {
-  const timeoutSeconds = Number(el.netboxTimeoutSeconds.value);
-  const data = await fetchJson("/api/admin/netbox-probe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      base_url: el.netboxBaseUrl.value.trim() || null,
-      token: el.netboxToken.value.trim() || null,
-      token_env: el.netboxTokenEnv.value.trim() || null,
-      timeout_seconds: Number.isFinite(timeoutSeconds) && timeoutSeconds > 0 ? timeoutSeconds : null,
-    }),
-  });
-  el.netboxProbeOutput.textContent = JSON.stringify(data, null, 2);
-}
-
-async function loadNetboxFieldExplorer() {
-  const sampleLimit = Number(el.netboxExplorerSampleLimit.value);
-  const data = await fetchJson("/api/admin/netbox-explorer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      object_type: el.netboxExplorerObjectType.value,
-      query: el.netboxExplorerQuery.value.trim(),
-      sample_limit: Number.isFinite(sampleLimit) && sampleLimit > 0 ? Math.round(sampleLimit) : 1,
-    }),
-  });
-  el.netboxExplorerOutput.textContent = JSON.stringify(data, null, 2);
-}
-
-async function downloadNetboxBundle() {
-  const sampleLimit = Number(el.netboxExplorerSampleLimit.value);
-  const payload = {
-    object_type: el.netboxExplorerObjectType.value,
-    query: el.netboxExplorerQuery.value.trim(),
-    sample_limit: Number.isFinite(sampleLimit) && sampleLimit > 0 ? Math.round(sampleLimit) : 1,
-  };
-  const response = await fetch("/api/admin/netbox-bundle", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "netbox_bundle_failed");
-  }
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const disposition = response.headers.get("Content-Disposition") || "";
-  const match = disposition.match(/filename=\"?([^\";]+)\"?/i);
-  const filename = match?.[1] || "netbox-mcp-bundle.zip";
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
-  el.netboxExplorerOutput.textContent = JSON.stringify(
-    {
-      success: true,
-      message: "Diagnose-Bundle heruntergeladen.",
-      filename,
-      object_type: payload.object_type,
-      query: payload.query,
-      sample_limit: payload.sample_limit,
-    },
-    null,
-    2,
-  );
-}
-
-async function saveDocsSourcesRaw() {
-  let config = {};
-  try {
-    config = JSON.parse(el.docsSourcesJson.value || "{}");
-  } catch (error) {
-    el.controlOutput.textContent = `Docs Sources JSON ungueltig: ${error.message}`;
-    return;
-  }
-  state.docsSourcesConfig = normalizeDocsSources(config);
-  await persistDocsSourcesConfig(state.docsSourcesConfig, { reloadAdmin: true, silent: false });
-}
-
-async function saveFilesSourcesRaw() {
-  let config = {};
-  try {
-    config = JSON.parse(el.filesSourcesJson.value || "{}");
-  } catch (error) {
-    el.controlOutput.textContent = `Files Sources JSON ungueltig: ${error.message}`;
-    return;
-  }
-  state.filesSourcesConfig = normalizeFilesSources(config);
-  await persistFilesSourcesConfig(state.filesSourcesConfig, { reloadAdmin: true, silent: false });
-}
-
 async function saveMcpsRaw() {
   let config = {};
   try {
@@ -1340,6 +1018,31 @@ async function saveMcpManager() {
   await saveMcpsRaw();
 }
 
+async function runGuideAction(action) {
+  const draft = collectGuideDraft();
+  const data = await fetchJson("/api/admin/mcp-guide/probe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, draft }),
+  });
+  state.guideLastDraft = deepClone(draft);
+  const checks = Array.isArray(data.checks)
+    ? data.checks.map((item) => ({
+        label: item.label || item.id || "Check",
+        value: `${item.ok ? "ok" : "warn"}${item.detail ? ` | ${item.detail}` : ""}`,
+      }))
+    : [];
+  const hints = Array.isArray(data.hints)
+    ? data.hints.map((item, index) => ({
+        label: `Hinweis ${index + 1}`,
+        value: item,
+      }))
+    : [];
+  renderGuideMeta(el.guideChecks, checks, "Checks", "Noch keine Guide-Checks");
+  renderGuideMeta(el.guideHints, hints, "Hinweise", "Noch keine Hinweise");
+  el.guideOutput.textContent = JSON.stringify(data, null, 2);
+}
+
 async function saveUsersRaw() {
   let config = {};
   try {
@@ -1356,6 +1059,69 @@ async function saveUsersRaw() {
   });
   el.controlOutput.textContent = JSON.stringify(data, null, 2);
   await refreshAppState({ reloadAdmin: true });
+  syncPasswordResetUsers();
+}
+
+async function changeOwnPassword() {
+  if (el.changePasswordNew.value !== el.changePasswordConfirm.value) {
+    throw new Error("Neue Passwoerter stimmen nicht ueberein.");
+  }
+  const data = await fetchJson("/api/auth/password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      current_password: el.changePasswordCurrent.value,
+      new_password: el.changePasswordNew.value,
+      new_password_confirm: el.changePasswordConfirm.value,
+    }),
+  });
+  el.changePasswordCurrent.value = "";
+  el.changePasswordNew.value = "";
+  el.changePasswordConfirm.value = "";
+  el.changePasswordOutput.textContent = JSON.stringify(data, null, 2);
+}
+
+async function resetUserPassword() {
+  if (el.passwordResetNew.value !== el.passwordResetConfirm.value) {
+    throw new Error("Neue Passwoerter stimmen nicht ueberein.");
+  }
+  const username = el.passwordResetUsername.value.trim();
+  if (!username) {
+    throw new Error("Kein Benutzer ausgewaehlt.");
+  }
+  const data = await fetchJson(`/api/admin/users/${encodeURIComponent(username)}/password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      new_password: el.passwordResetNew.value,
+      new_password_confirm: el.passwordResetConfirm.value,
+    }),
+  });
+  el.passwordResetNew.value = "";
+  el.passwordResetConfirm.value = "";
+  el.passwordResetOutput.textContent = JSON.stringify(data, null, 2);
+}
+
+async function bootstrapAdminAccount() {
+  if (el.setupPassword.value !== el.setupPasswordConfirm.value) {
+    throw new Error("Passwoerter stimmen nicht ueberein.");
+  }
+  await fetchJson("/api/setup/bootstrap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: el.setupUsername.value.trim(),
+      display_name: el.setupDisplayName.value.trim() || el.setupUsername.value.trim(),
+      password: el.setupPassword.value,
+      password_confirm: el.setupPasswordConfirm.value,
+    }),
+  });
+  el.setupPassword.value = "";
+  el.setupPasswordConfirm.value = "";
+  await ensureSession();
+  setActiveView("overview");
+  await refreshAppState({ reloadAdmin: true });
+  el.loginOutput.textContent = "";
 }
 
 async function savePersona() {
@@ -1374,6 +1140,14 @@ async function savePersona() {
 
 async function handshakeRemoteMcp(mcpId) {
   const data = await fetchJson(`/api/admin/mcps/${encodeURIComponent(mcpId)}/handshake`, {
+    method: "POST",
+  });
+  el.controlOutput.textContent = JSON.stringify(data, null, 2);
+  await refreshHealth();
+}
+
+async function controlRemoteMcp(mcpId, action) {
+  const data = await fetchJson(`/api/admin/mcps/${encodeURIComponent(mcpId)}/control/${encodeURIComponent(action)}`, {
     method: "POST",
   });
   el.controlOutput.textContent = JSON.stringify(data, null, 2);
@@ -1489,6 +1263,22 @@ el.loginSubmit.addEventListener("click", async () => {
   }
 });
 
+el.setupSubmit.addEventListener("click", async () => {
+  try {
+    await bootstrapAdminAccount();
+  } catch (error) {
+    el.loginOutput.textContent = String(error.message || error);
+  }
+});
+
+el.changePasswordSubmit.addEventListener("click", async () => {
+  try {
+    await changeOwnPassword();
+  } catch (error) {
+    el.changePasswordOutput.textContent = String(error.message || error);
+  }
+});
+
 el.logoutButton.addEventListener("click", async () => {
   try {
     await fetchJson("/api/auth/logout", { method: "POST" });
@@ -1557,8 +1347,6 @@ el.logLines.addEventListener("change", async () => {
 });
 
 el.runMcp.addEventListener("click", submitDirectMcp);
-el.runNetbox.addEventListener("click", runNetboxQuickQuery);
-
 el.saveRuntime.addEventListener("click", async () => {
   try {
     await saveRuntimeConfig();
@@ -1583,94 +1371,9 @@ el.probeLlm.addEventListener("click", async () => {
   }
 });
 
-el.saveNetboxSettings.addEventListener("click", async () => {
-  try {
-    await saveNetboxSettings();
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
-el.probeNetbox.addEventListener("click", async () => {
-  try {
-    await probeNetboxConfig();
-  } catch (error) {
-    el.netboxProbeOutput.textContent = String(error.message || error);
-  }
-});
-
-el.exploreNetboxFields.addEventListener("click", async () => {
-  try {
-    await loadNetboxFieldExplorer();
-  } catch (error) {
-    el.netboxExplorerOutput.textContent = String(error.message || error);
-  }
-});
-
-el.downloadNetboxBundle.addEventListener("click", async () => {
-  try {
-    await downloadNetboxBundle();
-  } catch (error) {
-    el.netboxExplorerOutput.textContent = String(error.message || error);
-  }
-});
-
-el.saveDocsSources.addEventListener("click", async () => {
-  try {
-    await saveDocsSourcesRaw();
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
-el.saveDocsManager.addEventListener("click", async () => {
-  try {
-    await saveDocsManager();
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
-el.saveFilesManager.addEventListener("click", async () => {
-  try {
-    await saveFilesManager();
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
-el.docsSourcesManager.addEventListener("click", async (event) => {
-  const button = event.target.closest("button[data-docs-action]");
-  if (!button) return;
-  const sourceId = button.dataset.sourceId;
-  const action = button.dataset.docsAction;
-  try {
-    if (action === "upload") {
-      await uploadDocsArchive(sourceId);
-      return;
-    }
-    if (action === "reindex") {
-      await saveDocsManager({ silent: true });
-      const data = await runMcp(sourceId, "reindex", {});
-      el.controlOutput.textContent = JSON.stringify(data, null, 2);
-      await refreshAppState({ reloadAdmin: true });
-    }
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
 el.saveSystemPrompt.addEventListener("click", async () => {
   try {
     await saveSystemPrompt();
-  } catch (error) {
-    el.controlOutput.textContent = String(error.message || error);
-  }
-});
-
-el.saveFilesSources.addEventListener("click", async () => {
-  try {
-    await saveFilesSourcesRaw();
   } catch (error) {
     el.controlOutput.textContent = String(error.message || error);
   }
@@ -1692,17 +1395,77 @@ el.saveMcpManager.addEventListener("click", async () => {
   }
 });
 
-for (const [button, kind] of [
-  [el.addMcpDocs, "docs"],
-  [el.addMcpFiles, "files"],
-  [el.addMcpNetbox, "netbox"],
-  [el.addMcpRemote, "remote_http"],
-]) {
+el.guideValidate.addEventListener("click", async () => {
+  try {
+    await runGuideAction("validate");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideHealth.addEventListener("click", async () => {
+  try {
+    await runGuideAction("health");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideHandshake.addEventListener("click", async () => {
+  try {
+    await runGuideAction("handshake");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideStatusCommandRun.addEventListener("click", async () => {
+  try {
+    await runGuideAction("status");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideStartCommandRun.addEventListener("click", async () => {
+  try {
+    await runGuideAction("start");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideStopCommandRun.addEventListener("click", async () => {
+  try {
+    await runGuideAction("stop");
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+el.guideAdopt.addEventListener("click", async () => {
+  try {
+    const data = await fetchJson("/api/admin/mcp-guide/probe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "validate", draft: collectGuideDraft() }),
+    });
+    upsertGuideDraftIntoManager(data.draft || collectGuideDraft());
+    el.guideOutput.textContent = JSON.stringify({ success: true, message: "Guide-Draft validiert und in MCP-Manager uebernommen.", id: data.draft?.id || "" }, null, 2);
+  } catch (error) {
+    el.guideOutput.textContent = String(error.message || error);
+  }
+});
+
+for (const [button, kind] of [[el.addMcpRemote, "remote_http"]]) {
+  if (!button) continue;
   button.addEventListener("click", () => {
     state.mcpsConfig = normalizeMcpsConfig(state.mcpsConfig);
-    state.mcpsConfig.mcps.push(defaultMcpByKind(kind));
+    const draft = defaultMcpByKind(kind);
+    state.mcpsConfig.mcps.push(draft);
     el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
     renderMcpManager();
+    syncGuideFromMcp(draft);
   });
 }
 
@@ -1711,6 +1474,14 @@ el.saveUsers.addEventListener("click", async () => {
     await saveUsersRaw();
   } catch (error) {
     el.controlOutput.textContent = String(error.message || error);
+  }
+});
+
+el.passwordResetSubmit.addEventListener("click", async () => {
+  try {
+    await resetUserPassword();
+  } catch (error) {
+    el.passwordResetOutput.textContent = String(error.message || error);
   }
 });
 
@@ -1777,6 +1548,14 @@ el.mcpManager.addEventListener("click", async (event) => {
     renderMcpManager();
     return;
   }
+  const guideButton = event.target.closest('button[data-mcp-action="guide"]');
+  if (guideButton) {
+    const index = Number(guideButton.dataset.mcpIndex);
+    const item = state.mcpsConfig?.mcps?.[index];
+    syncGuideFromMcp(item);
+    el.guideOutput.textContent = JSON.stringify({ success: true, message: "MCP in Guide geladen.", id: item?.id || "" }, null, 2);
+    return;
+  }
   const handshakeButton = event.target.closest('button[data-mcp-action="handshake"]');
   if (handshakeButton) {
     try {
@@ -1786,28 +1565,36 @@ el.mcpManager.addEventListener("click", async (event) => {
       el.controlOutput.textContent = String(error.message || error);
     }
   }
-});
-
-el.docsNav.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-doc-id]");
-  if (!button) return;
-  state.activeDocId = button.dataset.docId;
-  renderDocsCatalog();
+  const controlButton = event.target.closest('button[data-mcp-action="start"], button[data-mcp-action="stop"], button[data-mcp-action="status"]');
+  if (controlButton) {
+    try {
+      await saveMcpManager();
+      await controlRemoteMcp(controlButton.dataset.mcpId, controlButton.dataset.mcpAction);
+    } catch (error) {
+      el.controlOutput.textContent = String(error.message || error);
+    }
+  }
 });
 
 (async function bootstrap() {
   try {
     loadUiPreferences();
-    await ensureSession();
+    const session = await ensureSession();
+    if (!session?.authenticated) {
+      return;
+    }
     setActiveView("overview");
     await loadConfig();
-    await loadDocsCatalog();
     await refreshHealth();
     await loadPerformance();
     if (state.session?.is_admin) {
       await loadAdminEditors();
     }
   } catch (error) {
+    if (state.setupRequired) {
+      showSetup("");
+      return;
+    }
     showLogin("");
   }
 })();

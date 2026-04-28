@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SYSTEMD_MODE="${1:-user}"
+
+pretty_name="unknown"
+family="other"
+if [[ -f /etc/os-release ]]; then
+  . /etc/os-release
+  pretty_name="${PRETTY_NAME:-${ID:-unknown}}"
+  if [[ "${ID:-}" == "ubuntu" || "${ID_LIKE:-}" == *ubuntu* ]]; then
+    family="ubuntu"
+  elif [[ "${ID:-}" == "arch" || "${ID:-}" == "cachyos" || "${ID_LIKE:-}" == *arch* ]]; then
+    family="arch"
+  fi
+fi
+
+printf '[check][info] Plattform: %s (%s)\n' "${pretty_name}" "${family}"
+if [[ "${family}" == "ubuntu" ]]; then
+  printf '[check][info] Setup-Hinweis: ./scripts/ubuntu-first-setup.sh\n'
+elif [[ "${family}" == "arch" ]]; then
+  printf '[check][info] Setup-Hinweis: ./scripts/arch-first-setup.sh\n'
+else
+  printf '[check][warn] Keine optimierte Setup-Routine fuer diese Distribution hinterlegt.\n'
+fi
+
+if [[ ! -x "${SCRIPT_DIR}/woddi-ai-control" ]]; then
+  printf '[check][error] Launcher fehlt oder ist nicht ausfuehrbar: %s/woddi-ai-control\n' "${SCRIPT_DIR}" >&2
+  exit 2
+fi
+
+if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1 && [[ ! -x "${SCRIPT_DIR}/.venv/bin/python" ]]; then
+  printf '[check][error] python3/python nicht gefunden. Ubuntu: sudo apt-get install -y python3 python3-venv python3-pip git curl | Arch: sudo pacman -S python python-pip git curl\n' >&2
+  exit 2
+fi
+
+cd "${SCRIPT_DIR}"
+exec "${SCRIPT_DIR}/woddi-ai-control" check-prerequisites --systemd "${SYSTEMD_MODE}"

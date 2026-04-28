@@ -17,7 +17,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=__WODDI_MONO_WORKDIR__/logs __WODDI_MONO_WORKDIR__/config __WODDI_MONO_WORKDIR__/data
+ReadWritePaths=__WODDI_MONO_WORKDIR__ __WODDI_MONO_WORKDIR__/logs __WODDI_MONO_WORKDIR__/config __WODDI_MONO_WORKDIR__/data __WODDI_MONO_WORKDIR__/personas
 
 [Install]
 WantedBy=__WODDI_MONO_WANTED_BY__

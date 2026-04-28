@@ -1,35 +1,4 @@
 {
-  "groups": [
-    {
-      "id": "ops",
-      "name": "Operations",
-      "allowed_mcp_ids": [
-        "docs-core",
-        "docs-sat-docs",
-        "files-main",
-        "netbox-main"
-      ],
-      "persona_id": "network-ops"
-    }
-  ],
-  "users": [
-    {
-      "username": "admin",
-      "display_name": "Admin",
-      "role": "admin",
-      "password_sha256": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
-      "allowed_mcp_ids": ["*"],
-      "groups": [],
-      "persona_id": "default"
-    },
-    {
-      "username": "user",
-      "display_name": "User",
-      "role": "user",
-      "password_sha256": "04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb",
-      "groups": ["ops"],
-      "allowed_mcp_ids": [],
-      "persona_id": "default"
-    }
-  ]
+  "groups": [],
+  "users": []
 }

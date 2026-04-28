@@ -1,18 +1,64 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
 import secrets
 import threading
 import time
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+PBKDF2_ALGORITHM = "pbkdf2_sha256"
+PBKDF2_ITERATIONS = 310_000
+PBKDF2_SALT_BYTES = 16
+
+
+def hash_password(password: str, *, iterations: int = PBKDF2_ITERATIONS) -> str:
+    salt = secrets.token_bytes(PBKDF2_SALT_BYTES)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, max(120_000, int(iterations)))
+    return "$".join(
+        [
+            PBKDF2_ALGORITHM,
+            str(max(120_000, int(iterations))),
+            base64.b64encode(salt).decode("ascii"),
+            base64.b64encode(digest).decode("ascii"),
+        ]
+    )
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    stored = str(password_hash or "").strip()
+    if not stored:
+        return False
+    if stored.startswith(f"{PBKDF2_ALGORITHM}$"):
+        try:
+            _algorithm, iterations_raw, salt_b64, digest_b64 = stored.split("$", 3)
+            iterations = max(120_000, int(iterations_raw))
+            salt = base64.b64decode(salt_b64.encode("ascii"))
+            expected = base64.b64decode(digest_b64.encode("ascii"))
+        except Exception:
+            return False
+        candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return hmac.compare_digest(expected, candidate)
+    return hmac.compare_digest(stored.lower(), hashlib.sha256(password.encode("utf-8")).hexdigest())
+
+
+def password_hash_scheme(password_hash: str) -> str:
+    stored = str(password_hash or "").strip()
+    if stored.startswith(f"{PBKDF2_ALGORITHM}$"):
+        return PBKDF2_ALGORITHM
+    if len(stored) == 64 and all(character in "0123456789abcdef" for character in stored.lower()):
+        return "sha256_legacy"
+    return "unknown"
+
+
+def password_hash_is_modern(password_hash: str) -> bool:
+    return password_hash_scheme(password_hash) == PBKDF2_ALGORITHM
 
 
 @dataclass(frozen=True)
@@ -29,6 +75,7 @@ class UserRecord:
 @dataclass
 class AuthSession:
     token: str
+    csrf_token: str
     username: str
     display_name: str
     role: str
@@ -42,12 +89,69 @@ class AuthSession:
         return self.role == "admin"
 
 
+class LoginAttemptLimiter:
+    def __init__(self, *, limit: int = 8, window_seconds: int = 300, block_seconds: int = 900) -> None:
+        self.limit = max(3, int(limit))
+        self.window_seconds = max(30, int(window_seconds))
+        self.block_seconds = max(self.window_seconds, int(block_seconds))
+        self._lock = threading.Lock()
+        self._history: dict[str, deque[float]] = defaultdict(deque)
+        self._blocked_until: dict[str, float] = {}
+
+    def allow(self, key: str) -> bool:
+        if not key:
+            return True
+        now = time.time()
+        with self._lock:
+            self._purge_locked(now)
+            blocked_until = self._blocked_until.get(key, 0.0)
+            return blocked_until <= now
+
+    def register_failure(self, key: str) -> None:
+        if not key:
+            return
+        now = time.time()
+        with self._lock:
+            self._purge_locked(now)
+            history = self._history[key]
+            history.append(now)
+            if len(history) >= self.limit:
+                self._blocked_until[key] = now + self.block_seconds
+                history.clear()
+
+    def clear(self, key: str) -> None:
+        if not key:
+            return
+        with self._lock:
+            self._history.pop(key, None)
+            self._blocked_until.pop(key, None)
+
+    def retry_after_seconds(self, key: str) -> int:
+        if not key:
+            return 0
+        with self._lock:
+            blocked_until = self._blocked_until.get(key, 0.0)
+        return max(0, int(blocked_until - time.time()))
+
+    def _purge_locked(self, now: float) -> None:
+        cutoff = now - self.window_seconds
+        for key, history in list(self._history.items()):
+            while history and history[0] < cutoff:
+                history.popleft()
+            if not history:
+                self._history.pop(key, None)
+        for key, blocked_until in list(self._blocked_until.items()):
+            if blocked_until <= now:
+                self._blocked_until.pop(key, None)
+
+
 class AuthManager:
     def __init__(self, users_path: Path, *, session_ttl_seconds: int = 60 * 60 * 12) -> None:
         self.users_path = users_path
         self.session_ttl_seconds = max(300, int(session_ttl_seconds))
         self._lock = threading.Lock()
         self._sessions: dict[str, AuthSession] = {}
+        self.login_limiter = LoginAttemptLimiter()
 
     def load_users(self) -> list[UserRecord]:
         raw = self.load_passwd()
@@ -90,7 +194,7 @@ class AuthManager:
         if not isinstance(item, dict):
             return None
         username = str(item.get("username", "")).strip()
-        password_sha256 = str(item.get("password_sha256", "")).strip().lower()
+        password_sha256 = str(item.get("password_sha256", "")).strip()
         if not username or not password_sha256:
             return None
         role = str(item.get("role", "user")).strip().lower() or "user"
@@ -139,18 +243,21 @@ class AuthManager:
         candidate_username = username.strip()
         if not candidate_username or not password:
             return None
-        candidate_hash = hash_password(password)
         for user in self.load_users():
             if user.username != candidate_username:
                 continue
-            if hmac.compare_digest(user.password_sha256, candidate_hash):
+            if verify_password(password, user.password_sha256):
                 return user
         return None
+
+    def setup_required(self) -> bool:
+        return not bool(self.load_users())
 
     def create_session(self, user: UserRecord) -> AuthSession:
         token = secrets.token_urlsafe(32)
         session = AuthSession(
             token=token,
+            csrf_token=secrets.token_urlsafe(24),
             username=user.username,
             display_name=user.display_name,
             role=user.role,

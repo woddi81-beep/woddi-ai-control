@@ -191,6 +191,16 @@ body {
   gap: 20px;
 }
 
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.guide-span-2 {
+  grid-column: span 2;
+}
+
 .panel-span-2 {
   grid-column: span 2;
 }
@@ -252,6 +262,11 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 0.95rem;
+}
+
+.scope-hint {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .chat-output,
@@ -426,6 +441,10 @@ button.secondary {
   word-break: break-word;
 }
 
+#platform-commands {
+  min-height: 120px;
+}
+
 .kv-list {
   display: grid;
   gap: 10px;
@@ -518,6 +537,19 @@ button.secondary {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .guide-grid,
+  .panel-grid,
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-span-2,
+  .panel-span-2 {
+    grid-column: auto;
+  }
 }
 
 .card-actions {

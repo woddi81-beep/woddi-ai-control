@@ -25,21 +25,14 @@
     "docs_answer_cache_ttl_seconds": 120
   },
   "docs": {
-    "allow_outside_project": true,
+    "allow_outside_project": false,
     "source_scan_cache_ttl_seconds": 20,
     "health_cache_ttl_seconds": 15
   },
   "files": {
-    "allow_outside_project": true,
+    "allow_outside_project": false,
     "search_cache_ttl_seconds": 45,
     "read_max_chars": 12000,
     "search_max_results": 8
-  },
-  "netbox": {
-    "base_url": "https://netbox-dev.global.cloud.sap/api",
-    "token": "",
-    "token_env": "",
-    "cache_ttl_seconds": 45,
-    "timeout_seconds": 12
   }
 }

@@ -16,16 +16,40 @@
         <p class="muted">Nutzer sehen nur ihre erlaubten MCPs. Konfiguration und Betrieb sind Admin-only.</p>
       </div>
     </div>
-    <label>
-      Benutzername
-      <input id="login-username" type="text" autocomplete="username">
-    </label>
-    <label>
-      Passwort
-      <input id="login-password" type="password" autocomplete="current-password">
-    </label>
-    <div class="button-row">
-      <button id="login-submit">Anmelden</button>
+    <div id="login-form">
+      <label>
+        Benutzername
+        <input id="login-username" type="text" autocomplete="username">
+      </label>
+      <label>
+        Passwort
+        <input id="login-password" type="password" autocomplete="current-password">
+      </label>
+      <div class="button-row">
+        <button id="login-submit">Anmelden</button>
+      </div>
+    </div>
+    <div id="setup-form" hidden>
+      <p class="muted">Kein Admin eingerichtet. Lege jetzt den ersten Administrator an.</p>
+      <label>
+        Admin-Benutzername
+        <input id="setup-username" type="text" autocomplete="username">
+      </label>
+      <label>
+        Anzeigename
+        <input id="setup-display-name" type="text" autocomplete="name">
+      </label>
+      <label>
+        Passwort
+        <input id="setup-password" type="password" autocomplete="new-password">
+      </label>
+      <label>
+        Passwort wiederholen
+        <input id="setup-password-confirm" type="password" autocomplete="new-password">
+      </label>
+      <div class="button-row">
+        <button id="setup-submit">Initiales Admin-Konto anlegen</button>
+      </div>
     </div>
     <pre id="login-output" class="console"></pre>
   </div>
@@ -37,8 +61,8 @@
       <img class="brand-mark" src="/static/logo-mark.svg" alt="woddi-ai control Logo">
       <div class="brand-copy">
         <p class="eyebrow">woddi-ai-control</p>
-        <h1>MCP Control Desk fuer woddi-ai Satelliten</h1>
-        <p class="subline">Weboberflaeche fuer Doku-, Files- und NetBox-MCPs mit Runtime-Reload, Restart, Root-Verwaltung und direktem MCP-Zugriff.</p>
+        <h1>MCP Control Desk fuer externe Module</h1>
+        <p class="subline">Weboberflaeche fuer externe MCP-Dienste mit Guide, Runtime-Reload und Plattformfokus auf Ubuntu sowie Arch/CachyOS.</p>
       </div>
     </div>
     <div class="hero-badges">
@@ -53,7 +77,6 @@
   <main class="shell">
     <nav class="view-tabs" aria-label="Bereiche">
       <button class="tab-button active" data-view-button="overview">Uebersicht</button>
-      <button class="tab-button" data-view-button="docs">Doku</button>
       <button class="tab-button" data-view-button="tools">Tools</button>
       <button class="tab-button admin-only" data-view-button="config">Konfiguration</button>
       <button class="tab-button admin-only" data-view-button="logs">Logs</button>
@@ -65,7 +88,7 @@
           <div class="panel-head">
             <div>
               <h2>Chat</h2>
-              <p class="muted">Streaming mit MCP-Kontext aus Doku, Files und optional NetBox.</p>
+              <p class="muted">Streaming mit Kontext aus den freigegebenen externen MCPs.</p>
             </div>
             <div class="session-wrap">
               <label>
@@ -75,6 +98,8 @@
             </div>
           </div>
 
+          <div id="role-summary" class="scope-row" hidden></div>
+
           <div id="mcp-selector" class="scope-row">
             <label><input id="show-mcp-context-in-chat" type="checkbox" checked> MCP Kontext im Chat</label>
           </div>
@@ -82,7 +107,7 @@
           <div id="chat-output" class="chat-output"></div>
 
           <div class="chat-compose">
-            <textarea id="chat-input" rows="4" placeholder="Frage stellen oder direkt /mcp files search {&quot;query&quot;:&quot;satellite_services&quot;}"></textarea>
+            <textarea id="chat-input" rows="4" placeholder="Frage stellen oder direkt /mcp mein-modul query {&quot;query&quot;:&quot;status cluster-a&quot;}"></textarea>
             <div class="compose-actions">
               <button id="send-chat">Senden</button>
               <button id="clear-chat" class="secondary">Leeren</button>
@@ -106,23 +131,22 @@
         </section>
 
         <aside class="stack right-rail">
-          <section class="panel">
+          <section class="panel admin-only">
             <div class="panel-head">
               <div>
-                <h2>Systemstatus</h2>
-                <p class="muted">Schneller Blick auf LLM, NetBox, MCP-Pfade und File-Roots.</p>
+                <h2>System Readiness</h2>
+                <p class="muted">Vor dem ersten Start: Plattform erkennen, Preflight ausfuehren und den passenden Setup-Pfad nutzen.</p>
               </div>
-              <button id="refresh-health" class="secondary">Refresh</button>
             </div>
-            <div id="config-summary" class="summary-grid"></div>
+            <div id="platform-summary" class="summary-grid"></div>
             <div class="meta-grid compact">
               <article class="meta-card">
-                <h3>NetBox</h3>
-                <div id="netbox-summary" class="kv-list"></div>
+                <h3>Checks</h3>
+                <div id="platform-checks" class="kv-list"></div>
               </article>
               <article class="meta-card">
-                <h3>Pfade</h3>
-                <div id="paths-list" class="kv-list"></div>
+                <h3>Quickstart</h3>
+                <pre id="platform-commands" class="console compact-console"></pre>
               </article>
             </div>
           </section>
@@ -130,8 +154,25 @@
           <section class="panel">
             <div class="panel-head">
               <div>
+                <h2>Systemstatus</h2>
+              <p class="muted">Schneller Blick auf LLM, aktive MCPs und relevante Pfade.</p>
+              </div>
+              <button id="refresh-health" class="secondary">Refresh</button>
+            </div>
+            <div id="config-summary" class="summary-grid"></div>
+          <div class="meta-grid compact">
+            <article class="meta-card">
+              <h3>Pfade</h3>
+              <div id="paths-list" class="kv-list"></div>
+            </article>
+          </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
                 <h2>MCP Status</h2>
-                <p class="muted">Quellenzustand, File-Roots und Reindex/Health zentral im Blick.</p>
+              <p class="muted">Health und Erreichbarkeit der aktiven externen MCPs.</p>
               </div>
             </div>
             <div id="mcp-cards" class="mcp-cards scroll-box"></div>
@@ -164,33 +205,13 @@
       </div>
     </section>
 
-    <section class="view-panel" data-view-panel="docs">
-      <section class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Betriebsdoku</h2>
-            <p class="muted">README, Architektur und Operations direkt in der Oberfläche.</p>
-          </div>
-        </div>
-        <div class="panel-grid">
-          <aside class="panel" style="padding:12px;">
-            <div id="docs-nav" class="docs-nav"></div>
-          </aside>
-          <article class="panel" style="padding:12px;">
-            <div id="docs-meta" class="kv-list"></div>
-            <pre id="docs-content" class="console docs-console"></pre>
-          </article>
-        </div>
-      </section>
-    </section>
-
     <section class="view-panel" data-view-panel="tools">
       <div class="panel-grid two-up">
         <section class="panel">
           <div class="panel-head">
             <div>
               <h2>Direkter MCP Call</h2>
-              <p class="muted">Fuer exakte Abfragen gegen Docs, Files oder NetBox.</p>
+              <p class="muted">Fuer exakte Abfragen gegen einen freigegebenen externen MCP.</p>
             </div>
           </div>
           <label>
@@ -203,7 +224,7 @@
           </label>
           <label>
             JSON Payload
-            <textarea id="mcp-payload" rows="8">{ "query": "pricing configuration" }</textarea>
+            <textarea id="mcp-payload" rows="8">{}</textarea>
           </label>
           <button id="run-mcp">Ausfuehren</button>
           <pre id="mcp-output" class="console"></pre>
@@ -212,30 +233,24 @@
         <section class="panel">
           <div class="panel-head">
             <div>
-              <h2>NetBox Quick Query</h2>
-              <p class="muted">Token ist optional. Falls die Ziel-API anonym blockiert, erscheint das sauber als HTTP 401/403.</p>
+              <h2>Passwort</h2>
+              <p class="muted">Eigenes Passwort aendern, ohne die User-JSON anzufassen.</p>
             </div>
           </div>
           <label>
-            Object Type
-            <select id="netbox-object-type">
-              <option value="devices">devices</option>
-              <option value="sites">sites</option>
-              <option value="racks">racks</option>
-              <option value="interfaces">interfaces</option>
-              <option value="ip-addresses">ip-addresses</option>
-              <option value="prefixes">prefixes</option>
-              <option value="tenants">tenants</option>
-              <option value="virtual-machines">virtual-machines</option>
-              <option value="clusters">clusters</option>
-            </select>
+            Aktuelles Passwort
+            <input id="change-password-current" type="password" autocomplete="current-password">
           </label>
           <label>
-            Suche
-            <input id="netbox-query" type="text" placeholder="hostname, ip, rack, site ...">
+            Neues Passwort
+            <input id="change-password-new" type="password" autocomplete="new-password">
           </label>
-          <button id="run-netbox" class="secondary">NetBox abfragen</button>
-          <pre id="netbox-output" class="console"></pre>
+          <label>
+            Neues Passwort wiederholen
+            <input id="change-password-confirm" type="password" autocomplete="new-password">
+          </label>
+          <button id="change-password-submit" class="secondary">Passwort aendern</button>
+          <pre id="change-password-output" class="console"></pre>
         </section>
 
         <section class="panel panel-span-2">
@@ -260,25 +275,91 @@
         <section class="panel panel-span-2">
           <div class="panel-head">
             <div>
-              <h2>Docs Quellen</h2>
-              <p class="muted">Doku-Pfade fuer die Satelliten pflegen, ZIP hochladen und bei Bedarf sofort reindexen.</p>
+              <h2>MCP Guide</h2>
+              <p class="muted">Gefuehrter Ubuntu-Check fuer neue MCPs: Basisdaten, lokale Kommandos, Health und Handshake vor der Uebernahme in den Manager.</p>
             </div>
-            <button id="save-docs-manager" class="secondary">Pfade speichern</button>
+            <div class="button-row">
+              <button id="guide-validate" class="secondary">1. Validieren</button>
+              <button id="guide-health" class="secondary">2. Health testen</button>
+              <button id="guide-handshake" class="secondary">3. Handshake testen</button>
+              <button id="guide-adopt">In Manager uebernehmen</button>
+            </div>
           </div>
-          <p id="docs-manager-note" class="hint"></p>
-          <div id="docs-sources-manager" class="docs-grid"></div>
+          <div class="guide-grid">
+            <label>
+              MCP ID
+              <input id="guide-id" type="text" placeholder="remote-main">
+            </label>
+            <label>
+              Anzeigename
+              <input id="guide-name" type="text" placeholder="Remote Main">
+            </label>
+            <label class="guide-span-2">
+              Beschreibung
+              <input id="guide-description" type="text" placeholder="Externer MCP fuer Cluster oder Plattformbetrieb">
+            </label>
+            <label>
+              Base URL
+              <input id="guide-base-url" type="text" placeholder="http://127.0.0.1:8080">
+            </label>
+            <label>
+              Execute Path
+              <input id="guide-execute-path" type="text" value="/execute">
+            </label>
+            <label>
+              Health Path
+              <input id="guide-health-path" type="text" value="/health">
+            </label>
+            <label>
+              Timeout Sekunden
+              <input id="guide-timeout-seconds" type="number" min="3" max="120" step="1" value="15">
+            </label>
+            <label>
+              Bearer Token Env
+              <input id="guide-bearer-token-env" type="text" placeholder="REMOTE_MCP_TOKEN">
+            </label>
+            <label class="guide-span-2">
+              Working Dir
+              <input id="guide-working-dir" type="text" placeholder="/srv/http/mein-mcp">
+            </label>
+            <label class="guide-span-2">
+              Start Command JSON
+              <textarea id="guide-start-command" rows="3">[]</textarea>
+            </label>
+            <label class="guide-span-2">
+              Status Command JSON
+              <textarea id="guide-status-command" rows="3">[]</textarea>
+            </label>
+            <label class="guide-span-2">
+              Stop Command JSON
+              <textarea id="guide-stop-command" rows="3">[]</textarea>
+            </label>
+          </div>
+          <div class="button-row">
+            <button id="guide-run-status-command" class="secondary">Status Command testen</button>
+            <button id="guide-start-command-run" class="secondary">Start Command testen</button>
+            <button id="guide-stop-command-run" class="secondary">Stop Command testen</button>
+          </div>
+          <div class="meta-grid compact">
+            <article class="meta-card">
+              <h3>Guide Checks</h3>
+              <div id="guide-checks" class="kv-list"></div>
+            </article>
+            <article class="meta-card">
+              <h3>Hinweise</h3>
+              <div id="guide-hints" class="kv-list"></div>
+            </article>
+          </div>
+          <pre id="guide-output" class="console"></pre>
         </section>
 
         <section class="panel panel-span-2">
           <div class="panel-head">
             <div>
               <h2>MCP Manager</h2>
-              <p class="muted">Lokale und entfernte MCPs ueber Formulare verwalten, inklusive Remote-Handshake.</p>
+              <p class="muted">Externe MCP-Module per HTTP verwalten. Optional koennen Start-, Stop- und Status-Kommandos hinterlegt werden.</p>
             </div>
             <div class="button-row">
-              <button id="add-mcp-docs" class="secondary">Docs MCP</button>
-              <button id="add-mcp-files" class="secondary">Files MCP</button>
-              <button id="add-mcp-netbox" class="secondary">NetBox MCP</button>
               <button id="add-mcp-remote" class="secondary">Remote MCP</button>
               <button id="save-mcp-manager">Manager speichern</button>
             </div>
@@ -304,7 +385,7 @@
           <div class="panel-head">
             <div>
               <h2>Passwd</h2>
-              <p class="muted">User, Gruppen, Persona und erlaubte MCP-IDs in der Root-Datei.</p>
+              <p class="muted">User, Gruppen, Persona und erlaubte MCP-IDs. Passwort-Aenderungen laufen ueber die separaten Passwort-Formulare.</p>
             </div>
           </div>
           <label>
@@ -312,6 +393,29 @@
             <textarea id="users-json" rows="18"></textarea>
           </label>
           <button id="save-users" class="secondary">User speichern</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Passwort Reset</h2>
+              <p class="muted">Admin-Reset fuer bestehende Benutzer ohne JSON-Edit.</p>
+            </div>
+          </div>
+          <label>
+            Benutzer
+            <select id="password-reset-username"></select>
+          </label>
+          <label>
+            Neues Passwort
+            <input id="password-reset-new" type="password" autocomplete="new-password">
+          </label>
+          <label>
+            Neues Passwort wiederholen
+            <input id="password-reset-confirm" type="password" autocomplete="new-password">
+          </label>
+          <button id="password-reset-submit" class="secondary">Passwort zuruecksetzen</button>
+          <pre id="password-reset-output" class="console"></pre>
         </section>
 
         <section class="panel">
@@ -330,18 +434,6 @@
             Inhalt
             <textarea id="persona-content" rows="18"></textarea>
           </label>
-        </section>
-
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>Files Roots</h2>
-              <p class="muted">Lokale Repo- und Konfigurationswurzeln fuer den Files-MCP ueber die UI verwalten.</p>
-            </div>
-            <button id="save-files-manager" class="secondary">Roots speichern</button>
-          </div>
-          <p id="files-manager-note" class="hint"></p>
-          <div id="files-sources-manager" class="docs-grid"></div>
         </section>
 
         <section class="panel">
@@ -386,7 +478,7 @@
           <div class="panel-head">
             <div>
               <h2>Runtime Settings</h2>
-              <p class="muted">LLM-, App-, Chat- und NetBox-Parameter persistent aendern.</p>
+              <p class="muted">LLM-, App- und Chat-Parameter persistent aendern.</p>
             </div>
           </div>
           <label>
@@ -394,112 +486,6 @@
             <textarea id="runtime-json" rows="16"></textarea>
           </label>
           <button id="save-runtime">Runtime speichern</button>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>NetBox MCP</h2>
-              <p class="muted">Base URL, Token-Quelle, Timeout und Cache direkt fuer dein NetBox-MCP pflegen.</p>
-            </div>
-            <button id="save-netbox-settings">NetBox speichern</button>
-          </div>
-          <label>
-            Base URL
-            <input id="netbox-base-url" type="text" placeholder="https://netbox.example.com/api">
-          </label>
-          <div class="panel-grid">
-            <label>
-              Token Env
-              <input id="netbox-token-env" type="text" placeholder="NETBOX_TOKEN">
-            </label>
-            <label>
-              Token
-              <input id="netbox-token" type="password" placeholder="optional statisch">
-            </label>
-          </div>
-          <div class="panel-grid">
-            <label>
-              Timeout Sekunden
-              <input id="netbox-timeout-seconds" type="number" min="3" max="120" step="1">
-            </label>
-            <label>
-              Cache TTL Sekunden
-              <input id="netbox-cache-ttl-seconds" type="number" min="5" max="600" step="1">
-            </label>
-          </div>
-          <div class="button-row">
-            <button id="probe-netbox" class="secondary">NetBox Probe</button>
-          </div>
-          <pre id="netbox-probe-output" class="console"></pre>
-        </section>
-
-        <section class="panel panel-span-2">
-          <div class="panel-head">
-            <div>
-              <h2>NetBox Field Explorer</h2>
-              <p class="muted">Filter, Feldnamen und ein Sample-Objekt fuer den gewaehlten NetBox-Endpoint anzeigen.</p>
-            </div>
-          </div>
-          <div class="panel-grid">
-            <label>
-              Object Type
-              <select id="netbox-explorer-object-type">
-                <option value="devices">devices</option>
-                <option value="sites">sites</option>
-                <option value="racks">racks</option>
-                <option value="interfaces">interfaces</option>
-                <option value="ip-addresses">ip-addresses</option>
-                <option value="prefixes">prefixes</option>
-                <option value="tenants">tenants</option>
-                <option value="virtual-machines">virtual-machines</option>
-                <option value="clusters">clusters</option>
-              </select>
-            </label>
-            <label>
-              Suche
-              <input id="netbox-explorer-query" type="text" placeholder="hostname, ip, site ...">
-            </label>
-          </div>
-          <div class="panel-grid">
-            <label>
-              Sample Limit
-              <input id="netbox-explorer-sample-limit" type="number" min="1" max="10" step="1" value="1">
-            </label>
-            <div class="button-row">
-              <button id="explore-netbox-fields" class="secondary">Felder laden</button>
-              <button id="download-netbox-bundle" class="secondary">Diagnose ZIP</button>
-            </div>
-          </div>
-          <pre id="netbox-explorer-output" class="console log-console"></pre>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Docs Sources</h2>
-              <p class="muted">Raw JSON fuer Muster, IDs und weitere Dokuquellen.</p>
-            </div>
-          </div>
-          <label>
-            docs_sources.json
-            <textarea id="docs-sources-json" rows="14"></textarea>
-          </label>
-          <button id="save-docs-sources" class="secondary">Docs Sources speichern</button>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Files Sources</h2>
-              <p class="muted">Raw JSON fuer File-Roots, Pfade und Muster des Files-MCP.</p>
-            </div>
-          </div>
-          <label>
-            files_sources.json
-            <textarea id="files-sources-json" rows="14"></textarea>
-          </label>
-          <button id="save-files-sources" class="secondary">Files Sources speichern</button>
         </section>
 
         <section class="panel panel-span-2">

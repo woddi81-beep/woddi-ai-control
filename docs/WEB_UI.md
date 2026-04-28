@@ -26,6 +26,7 @@ Die Dateien werden beim ersten Start aus den Vorlagen unter `config/` erzeugt, f
 ### Uebersicht
 
 - Chat mit pro User erlaubten MCPs
+- System-Readiness fuer Ubuntu und Arch/CachyOS
 - Health und MCP-Status
 - Performance und Systemstatus
 
@@ -41,6 +42,7 @@ Die Dateien werden beim ersten Start aus den Vorlagen unter `config/` erzeugt, f
 - Docs-Quellen
 - Files-Roots
 - MCP-Manager mit Formularen fuer `docs`, `files`, `netbox`, `remote_http`
+- MCP-Guide fuer neue `remote_http`-MCPs mit Validierung, Health-, Handshake- und Command-Checks
 - Remote-MCP-Handshake
 - `passwd.json` als Root-Verwaltung
 - Persona-Editor fuer `personas/*.md`
