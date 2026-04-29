@@ -68,6 +68,8 @@ const el = {
   addMcpRemote: document.getElementById("add-mcp-remote"),
   addMcpNetboxLabs: document.getElementById("add-mcp-netboxlabs"),
   saveMcpManager: document.getElementById("save-mcp-manager"),
+  scanLocalhostServices: document.getElementById("scan-localhost-services"),
+  localhostServicesOutput: document.getElementById("localhost-services-output"),
   mcpsJson: document.getElementById("mcps-json"),
   saveMcps: document.getElementById("save-mcps"),
   guideId: document.getElementById("guide-id"),
@@ -214,24 +216,24 @@ function normalizePersonas(items) {
 }
 
 function defaultMcpByKind(kind = "remote_http") {
-  if (kind === "netboxlabs_mcp_http") {
+  if (kind === "netbox_satellite_local") {
     return {
-      id: `netbox-mcp-${Date.now()}`,
-      name: "NetBox Labs MCP",
-      description: "Generischer MCP HTTP Server auf /mcp fuer NetBox Labs",
+      id: "sat-netbox-local",
+      name: "NetBox Satellite",
+      description: "Lokaler woddi-ai NetBox-Satellite via /satellite/execute auf Port 8093.",
       kind: "remote_http",
       enabled: true,
-      protocol: "mcp_http_v1",
+      protocol: "satellite_execute_v1",
       module: "netbox",
-      base_url: "http://127.0.0.1:8000",
-      execute_path: "/mcp",
+      base_url: "http://127.0.0.1:8093",
+      execute_path: "/satellite/execute",
       health_path: "/health",
       bearer_token_env: "",
       timeout_seconds: 20,
-      working_dir: "",
-      start_command: [],
-      stop_command: [],
-      status_command: [],
+      working_dir: "/srv/http/woddi-ai-control",
+      start_command: ["bash", "scripts/start_netbox_satellite.sh"],
+      stop_command: ["bash", "scripts/stop_netbox_satellite.sh"],
+      status_command: ["bash", "scripts/status_netbox_satellite.sh"],
     };
   }
   return {
@@ -1141,6 +1143,17 @@ async function saveMcpManager() {
   await saveMcpsRaw();
 }
 
+async function loadMcpPresets() {
+  if (!state.session?.is_admin) return [];
+  const data = await fetchJson("/api/admin/mcp-presets");
+  return Array.isArray(data.items) ? data.items : [];
+}
+
+async function scanLocalhostServices() {
+  const data = await fetchJson("/api/admin/localhost-services");
+  el.localhostServicesOutput.textContent = JSON.stringify(data, null, 2);
+}
+
 async function saveSingleMcpCard(index) {
   state.mcpsConfig = collectMcpManagerConfig();
   const item = state.mcpsConfig.mcps[index];
@@ -1624,16 +1637,46 @@ el.guideAdopt.addEventListener("click", async () => {
 
 for (const [button, kind] of [
   [el.addMcpRemote, "remote_http"],
-  [el.addMcpNetboxLabs, "netboxlabs_mcp_http"],
+  [el.addMcpNetboxLabs, "netbox_satellite_local"],
 ]) {
   if (!button) continue;
-  button.addEventListener("click", () => {
-    state.mcpsConfig = normalizeMcpsConfig(state.mcpsConfig);
-    const draft = defaultMcpByKind(kind);
-    state.mcpsConfig.mcps.push(draft);
-    el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
-    renderMcpManager();
-    syncGuideFromMcp(draft);
+  button.addEventListener("click", async () => {
+    try {
+      state.mcpsConfig = normalizeMcpsConfig(state.mcpsConfig);
+      let draft = defaultMcpByKind(kind);
+      if (kind === "netbox_satellite_local") {
+        const presets = await loadMcpPresets();
+        const preset = presets.find((item) => item?.builtin_kind === "netbox_satellite" || item?.id === "sat-netbox-local");
+        if (preset && typeof preset === "object") {
+          draft = deepClone(preset);
+        }
+      }
+      const existingIndex = state.mcpsConfig.mcps.findIndex((item) => item.id === draft.id);
+      if (existingIndex >= 0) {
+        state.mcpsConfig.mcps[existingIndex] = draft;
+      } else {
+        state.mcpsConfig.mcps.push(draft);
+      }
+      el.mcpsJson.value = JSON.stringify(state.mcpsConfig, null, 2);
+      renderMcpManager();
+      syncGuideFromMcp(draft);
+      await saveMcpsRaw();
+      if (kind === "netbox_satellite_local") {
+        await scanLocalhostServices();
+      }
+    } catch (error) {
+      el.controlOutput.textContent = String(error.message || error);
+    }
+  });
+}
+
+if (el.scanLocalhostServices) {
+  el.scanLocalhostServices.addEventListener("click", async () => {
+    try {
+      await scanLocalhostServices();
+    } catch (error) {
+      el.localhostServicesOutput.textContent = String(error.message || error);
+    }
   });
 }
 

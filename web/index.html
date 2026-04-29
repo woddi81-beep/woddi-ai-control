@@ -297,11 +297,23 @@
               </div>
               <div class="button-row">
                 <button id="add-mcp-remote" class="secondary">Remote Adapter</button>
-                <button id="add-mcp-netboxlabs" class="secondary">NetBox Labs MCP</button>
+                <button id="add-mcp-netboxlabs" class="secondary">NetBox Satellite</button>
                 <button id="save-mcp-manager">Alle MCPs speichern</button>
               </div>
             </div>
             <div id="mcp-manager" class="mcp-manager-stack" aria-label="MCP Workbench"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Localhost</p>
+                <h2>Port Scan 8000-9000</h2>
+                <p class="muted">Zeigt lokal erreichbare Dienste im ueblichen MCP-/Satellite-Bereich inklusive Health-Probe.</p>
+              </div>
+              <button id="scan-localhost-services" class="secondary">Ports scannen</button>
+            </div>
+            <pre id="localhost-services-output" class="console"></pre>
           </section>
 
           <section class="panel panel-span-2">

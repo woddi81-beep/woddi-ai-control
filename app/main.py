@@ -7,6 +7,7 @@ import logging
 import os
 import queue
 import shutil
+import socket
 import sys
 import subprocess
 import threading
@@ -665,6 +666,93 @@ def _record_metric(category: str, name: str, started_at: float, *, ok: bool = Tr
 
 def _service_log_path(current_settings: Any) -> Path:
     return current_settings.log_file.parent / f"{current_settings.app_name}-service.log"
+
+
+def _repo_exists(path: Path) -> bool:
+    return path.exists() and path.is_dir()
+
+
+def _netbox_satellite_preset(current_settings: Any) -> dict[str, Any]:
+    satellite_dir = (current_settings.base_dir.parent / "woddi-ai-satellite-netbox").resolve()
+    return {
+        "id": "sat-netbox-local",
+        "name": "NetBox Satellite",
+        "description": "Lokaler woddi-ai NetBox-Satellite via /satellite/execute auf Port 8093.",
+        "kind": "remote_http",
+        "enabled": True,
+        "protocol": "satellite_execute_v1",
+        "module": "netbox",
+        "base_url": "http://127.0.0.1:8093",
+        "execute_path": "/satellite/execute",
+        "health_path": "/health",
+        "bearer_token": "",
+        "bearer_token_env": "",
+        "timeout_seconds": 20.0,
+        "working_dir": str(current_settings.base_dir),
+        "start_command": ["bash", "scripts/start_netbox_satellite.sh"],
+        "stop_command": ["bash", "scripts/stop_netbox_satellite.sh"],
+        "status_command": ["bash", "scripts/status_netbox_satellite.sh"],
+        "builtin_kind": "netbox_satellite",
+        "builtin_repo_path": str(satellite_dir),
+        "builtin_repo_exists": _repo_exists(satellite_dir),
+    }
+
+
+def _localhost_service_scan_payload(current_settings: Any) -> dict[str, Any]:
+    open_ports: list[int] = []
+    try:
+        output = subprocess.check_output(["ss", "-ltn"], text=True, stderr=subprocess.DEVNULL)
+    except Exception:
+        output = ""
+    for raw_line in output.splitlines()[1:]:
+        columns = raw_line.split()
+        if len(columns) < 4:
+            continue
+        local_address = columns[3]
+        if ":" not in local_address:
+            continue
+        try:
+            port = int(local_address.rsplit(":", 1)[1])
+        except ValueError:
+            continue
+        if 8000 <= port <= 9000 and port not in open_ports:
+            open_ports.append(port)
+    open_ports.sort()
+
+    rows: list[dict[str, Any]] = []
+    for port in open_ports:
+        base_url = f"http://127.0.0.1:{port}"
+        row: dict[str, Any] = {
+            "port": port,
+            "base_url": base_url,
+            "health_url": f"{base_url}/health",
+            "service_hint": "netbox_satellite" if port == 8093 else "",
+        }
+        try:
+            with httpx.Client(timeout=httpx.Timeout(connect=0.35, read=0.7, write=0.35, pool=0.35)) as client:
+                response = client.get(f"{base_url}/health")
+            row["health_status"] = response.status_code
+            row["health_ok"] = response.status_code < 500
+            body = response.text.strip()
+            row["health_preview"] = body[:200]
+        except Exception as exc:
+            row["health_ok"] = False
+            row["health_error"] = str(exc)
+        rows.append(row)
+
+    netbox_repo = (current_settings.base_dir.parent / "woddi-ai-satellite-netbox").resolve()
+    return {
+        "success": True,
+        "range": {"start": 8000, "end": 9000},
+        "open_ports": rows,
+        "netbox_satellite": {
+            "expected_port": 8093,
+            "expected_base_url": "http://127.0.0.1:8093",
+            "repo_path": str(netbox_repo),
+            "repo_exists": _repo_exists(netbox_repo),
+            "preset": _netbox_satellite_preset(current_settings),
+        },
+    }
 
 
 def _mask_secret(value: str) -> str:
@@ -1645,6 +1733,28 @@ def get_mcps_config(request: Request) -> dict[str, Any]:
             item["bearer_token_present"] = bool(str(item.get("bearer_token", "")).strip())
             item["bearer_token"] = ""
     return {"config": config, "path": str(current_settings.mcps_config_path)}
+
+
+@app.get("/api/admin/mcp-presets")
+def get_mcp_presets(request: Request) -> dict[str, Any]:
+    _require_admin(request)
+    current_settings, _current_llm, _current_registry, _current_assistant = _state()
+    return {"items": [_netbox_satellite_preset(current_settings)]}
+
+
+@app.get("/api/admin/localhost-services")
+def get_localhost_services(request: Request) -> dict[str, Any]:
+    started_at = time.perf_counter()
+    _require_admin(request)
+    current_settings, _current_llm, _current_registry, _current_assistant = _state()
+    payload = _localhost_service_scan_payload(current_settings)
+    _record_metric(
+        "endpoint",
+        "/api/admin/localhost-services",
+        started_at,
+        data={"open_ports": len(payload.get("open_ports", []))},
+    )
+    return payload
 
 
 @app.post("/api/admin/mcp-guide/probe")
